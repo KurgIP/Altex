@@ -1,0 +1,18 @@
+# Nmap 7.95 scan initiated Wed Jun 12 13:15:13 2024 as: "C:/Program Files (x86)/Nmap/nmap.exe" -O -oN C:/projects/Altex/Altex/nmap_results/nmap_rst.txt 10.0.0.10
+Nmap scan report for 10.0.0.10
+Host is up (0.0013s latency).
+Not shown: 996 closed tcp ports (reset)
+PORT    STATE SERVICE
+21/tcp  open  ftp
+111/tcp open  rpcbind
+139/tcp open  netbios-ssn
+445/tcp open  microsoft-ds
+MAC Address: D4:3D:7E:EA:7B:CF (Micro-Star Int'l)
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.19, OpenWrt 21.02 (Linux 5.4)
+Network Distance: 1 hop
+
+OS detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Wed Jun 12 13:15:20 2024 -- 1 IP address (1 host up) scanned in 7.52 seconds
