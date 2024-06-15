@@ -21,13 +21,19 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting.Internal;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IWebHostEnvironment;
 using Altex.Data;
+using Microsoft.AspNetCore.Mvc;
 //using Community.Microsoft.Extensions.Caching.PostgreSql;
 
 namespace Altex
 {
     public class Startup
     {
-        public static string  _serverRootPath { get; private set; } = "";
+        public static  string              _serverRootPath       { get; private set; } = "";
+        public static  HttpContext         _httpContextStatic    { get; private set; }
+        public static  ILogger<Controller> _logerStatic          { get; private set; }
+        public static  IConfiguration      _configurationStatic  { get; private set; }
+        
+
 
         public IConfiguration Configuration { get; }
 
@@ -36,14 +42,16 @@ namespace Altex
         //public static IHttpContextAccessor _httpContextAccessor { get; private set; }
         //public static UserManager<ApplicationUser> _StaticUserManager { get; private set; }
 
-        public Startup(IHostingEnvironment env, IConfiguration configuration ) //
+        public Startup(IHostingEnvironment env, IConfiguration configuration, HttpContext context, ILogger<Controller> logger ) //
         {
-            Configuration   = configuration;
-            //StaticConfig    = configuration;
-            _serverRootPath = env.ContentRootPath;
+            Configuration        = configuration;
+            _serverRootPath      = env.ContentRootPath;
+            _httpContextStatic   = context;
+            _logerStatic         = logger;
+            _configurationStatic = configuration;
         }
 
-        //public static ApplicationUser              _app_user            { get; private set; }
+        //public static ApplicationUser     _app_user            { get; private set; }
 
         //public static ILoggerManager _logger { get; private set; }
 
@@ -54,13 +62,25 @@ namespace Altex
         {
             string postgreSq_lConnection = Configuration.GetConnectionString("PostgreSqlConnection");
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IConfiguration>(Configuration);
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(postgreSq_lConnection) 
                 );
+
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddLogging(config =>
+            {
+                config.AddDebug();
+                config.AddConsole();
+                config.SetMinimumLevel( LogLevel.Information );
+            });
+
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddControllersWithViews().AddRazorRuntimeCompilation(); //This is added for to see cshtml changes without restarting app.
             services.AddControllersWithViews();
-
             services.AddMvc();
 
             //services.AddDistributedPostgreSqlCache(setup =>
@@ -90,7 +110,7 @@ namespace Altex
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor) //, UserManager<ApplicationUser> manager
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, UserManager<ApplicationUser> manager) //
         {
             //_httpContextAccessor = httpContextAccessor;
             _serverRootPath = env.ContentRootPath;

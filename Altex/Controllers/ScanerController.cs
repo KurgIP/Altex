@@ -8,83 +8,59 @@ using System.IO;
 using Humanizer;
 using static Microsoft.AspNetCore.Razor.Language.TagHelperMetadata;
 using System.Text;
+using System.Configuration;
+using System.Drawing;
+using Altex.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Altex.Controllers
 {
-    public class ScanerController : Controller
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public class ScanerController : ControllerExpand
     {
 
-        [DllImport("Iphlpapi.dll")]
-        private static extern int SendARP(Int32 dest, Int32 host, ref Int64 mac, ref Int32 length);
+        //[DllImport("Iphlpapi.dll")]
+        //private static extern int SendARP(Int32 dest, Int32 host, ref Int64 mac, ref Int32 length);
 
-        [DllImport("Ws2_32.dll")]
-        private static extern Int32 inet_addr(string ip);
+        //[DllImport("Ws2_32.dll")]
+        //private static extern Int32 inet_addr(string ip);
 
-        //private static string contentRootPath = app.Environment.ContentRootPath;
 
-        // GET: ScanerController
+        private readonly ILogger<Controller>          _logger;
+        private readonly HttpContext                  _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        private static string  _nmap_programm_path      = "";
+        private static string  _nmap_result_folder      = "";
+        private static string  _nmap_result_file_XML    = "";
+        private static string  _contentRootPath         = "";
+        private static string  _nmap_result_folder_path = "";
+        
+        public ScanerController( ILogger<Controller> logger, HttpContext context, IConfiguration configuration, UserManager<ApplicationUser> userManager) : base( logger, context )
+        {
+            _userManager = userManager;
+            _logger      = logger;
+            _context     = context;
+
+            // Устанавливаем параметры NMap из файла настроек
+            _nmap_programm_path      = configuration.GetSection("NMap_Settings").GetValue<string>("programm_path");
+            _nmap_result_folder      = configuration.GetSection("NMap_Settings").GetValue<string>("result_folder");
+            _nmap_result_file_XML    = configuration.GetSection("NMap_Settings").GetValue<string>("result_file_XML");
+            _contentRootPath         = System.IO.Path.GetDirectoryName( System.Reflection.Assembly.GetExecutingAssembly().Location );
+
+            _nmap_result_folder_path = Path.Combine( _contentRootPath, _nmap_result_file_XML );
+        }
+
+        // GET: ScanerController      
         public ActionResult Index()
         {
-            //string contentRootPath = Startup._serverRootPath;  //app.Environment.ContentRootPath;
-
-            string contentRootPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-
-            string path_nmap  = "C:/Program Files (x86)/Nmap/nmap.exe";
-            string OutputPath = Path.Combine( contentRootPath, "nmap_results/nmap_result.txt");
-            OutputPath = "C:/projects/Altex/Altex/nmap_results/nmap_rst.xml";
-            using (var process = new Process())
-            {
-                process.StartInfo.FileName        = path_nmap;
-                process.StartInfo.UseShellExecute = false;
-                // process.StartInfo.Arguments       = " 8.8.8.8 -oN " + OutputPath;
-                process.StartInfo.Arguments = " -O 8.8.8.8 -oX " + OutputPath; // C:/ projects/Altex/Altex/nmap_results/nmap_rst.txt";
-                process.StartInfo.Arguments = " -O 8.8.8.8 " ; // C:/ projects/Altex/Altex/nmap_results/nmap_rst.txt";
-                //process.StartInfo.Arguments = string.Format("{0} {1}", Options, Target);
-                //process.StartInfo.WindowStyle = WindowStyle;
-
-                int           lineCount = 0;
-                StringBuilder output    = new StringBuilder();
-
-                process.StartInfo.RedirectStandardOutput = true;
-                process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
-                {
-                    // Prepend line numbers to each line of the output.
-                    if (!String.IsNullOrEmpty(e.Data))
-                    {
-                        lineCount++;
-                        output.Append("\n[" + lineCount + "]: " + e.Data);
-                    }
-                });
-
-
-                process.Start();
-
-                process.BeginOutputReadLine();
-
-                process.WaitForExit();
-
-                if ( !System.IO.File.Exists(OutputPath))
-                {
-                    
-                }
-            }
-            //sudo nmap -O  10.0.0.10 - oN / home / kipdbn_1 / Common / Altex / nmap_rslt.txt
-
-
-            //string IP = ip.Text;
-            //new Process
-            //{
-            //    StartInfo =
-            //    {
-            //        UseShellExecute = false,
-            //        FileName = "nmap.exe",
-            //        Arguments = "--top-ports 20 " + IP
-            //    }
-            //}.Start();
-            //string arguments = "--top-ports 20 " + IP;
-            //Process.Start("nmap.exe", arguments);
-
-
+            // Перехват потока вывода результатов сканирования nmap.exe не перехватывает поток в XML файл, а только стандартный поток в консоль.
+            // Так как вывод результатов в XML самый полный по данным, придётся получать данные результатов сканирования через XML файл.
+            // Для каждого потока указываем свой файл вывода XML результатов
 
 
             string ip_address ="10.0.0.10"; //"108.170.227.82"; //
@@ -118,72 +94,132 @@ namespace Altex.Controllers
                 // Discard PingExceptions and return false;
             }
 
-
-            bool pingable = false;
-            Ping pinger   = null;
-            try
-            {
-                pinger = new Ping();
-                PingReply reply = pinger.Send(ip_address);
-                pingable = reply.Status == IPStatus.Success;
-                if(pingable)
-                {
-
-                   string mac_adress = GetClientMAC(ip_address);
-                }
-            }
-            catch (PingException)
-            {
-                // Discard PingExceptions and return false;
-            }
-            finally
-            {
-                if (pinger != null)
-                {
-                    pinger.Dispose();
-                }
-            }
+            //(string, ScanItem) result_scan = await Scan_IP_async(ip_address);
 
             return View();
         }
 
-
-        private static string GetClientMAC(string strClientIP)
+        public async Task<ActionResult> aj_scanning()
         {
-            string mac_dest = "";
-            try
+            // Перехват потока вывода результатов сканирования nmap.exe не перехватывает поток в XML файл, а только стандартный поток в консоль.
+            // Так как вывод результатов в XML самый полный по данным, придётся получать данные результатов сканирования через XML файл.
+            // Для каждого запушеного для сканирования экземпляра nmap.exe указываем свой файл вывода XML результатов
+            string log_place = "ScanerController.aj_scanning";
+
+            #region //----------------------------------  Входные данные
+
+            string ip_address_start = "";
+            // Проверяем наличие параметра ip_start - стартовый IP-address, и его валидности значению IP-address
+            if ( check_input_ip_address( ref ip_address_start, Request.Form["ip_start"], log_place + ", param:ip_start", true)) 
+                return Content( convert_error_message_to_js_answer_with_errfield("Ошибка при написание значения IP-address!IDFIELD:#ip_start") );
+
+
+            bool is_ip_range = false;
+            // Проверяем наличие параметра is_range - значение указывает, что выбран диапазон IP адресов
+            if ( check_input_bool(ref is_ip_range, Request.Form["is_ip_range"], log_place + ", param:is_ip_range", true) )
+                return Content( convert_error_message_to_js_answer_with_errfield("Ошибка в значении выбора диапазона ip!IDFIELD:#is_ip_range") );
+
+            // Конец диапазона проверяем, только если указано, что  входящие данные содержат диапазон IP адресов
+            string ip_address_finish = ip_address_start;
+            if ( is_ip_range )
             {
-                Int32 ldest = inet_addr(strClientIP);
-                Int32 lhost = inet_addr("");
-                Int64 macinfo = new Int64();
-                Int32 len = 6;
-                int res = SendARP(ldest, 0, ref macinfo, ref len);
-                string mac_src = macinfo.ToString("X");
-                while (mac_src.Length < 12)
-                {
-                    mac_src = mac_src.Insert(0, "0");
-                }
-                for (int i = 0; i < 11; i++)
-                {
-                    if (0 == (i % 2))
-                    {
-                        if (i == 10)
-                        {
-                            mac_dest = mac_dest.Insert(0, mac_src.Substring(i, 2));
-                        }
-                        else
-                        {
-                            mac_dest = "-" + mac_dest.Insert(0, mac_src.Substring(i, 2));
-                        }
-                    }
-                }
+                // Проверяем наличие параметра ip_finish - конечный IP-address в диапазоне адресов, и его валидности значению IP-address
+                if (check_input_ip_address(ref ip_address_finish, Request.Form["ip_finish"], log_place + ", param:ip_finish", true))
+                    return Content( convert_error_message_to_js_answer_with_errfield("Ошибка при написание значения IP-address!IDFIELD:#ip_finish") );
             }
-            catch (Exception err)
-            {
-                throw new Exception("L?i " + err.Message);
-            }
-            return mac_dest;
+
+            #endregion
+
+            // Производим сканирование  указанных
+
+            _userManager.
+            string ip_address = "10.0.0.10"; //"108.170.227.82"; //
+
+
+            (string, ScanItem) result_scan = await Scan_IP_async(ip_address);
+
+            return View();
         }
+        private static async Task<(string, ScanItem)> Scan_IP_async( string ip_for_scan )
+        {
+            string   error    = String.Empty;
+            ScanItem scanItem = new ScanItem();
+
+            //string contentRootPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+            //string path_nmap = "C:/Program Files (x86)/Nmap/nmap.exe";
+            //string OutputPath = Path.Combine(contentRootPath, "nmap_results/nmap_result.txt");
+            //OutputPath = "C:/projects/Altex/Altex/nmap_results/nmap_rst.xml";
+            // C:/ projects/Altex/Altex/nmap_results/nmap_rst.txt";
+
+            string output_xml_file = "";
+            using ( var nmap_process = new Process() )
+            {
+                nmap_process.StartInfo.FileName        = _nmap_programm_path;
+                nmap_process.StartInfo.UseShellExecute = false;
+
+                string process_name    = nmap_process.ProcessName;
+                output_xml_file        = _nmap_result_folder_path + "/" + _nmap_result_file_XML + "_" + process_name + ".xml";
+                string arguments       = " -O " + ip_for_scan + " -oX " + output_xml_file;
+
+                nmap_process.StartInfo.Arguments = arguments;
+
+                #region // ненужный код 
+                // Временно оставил для тестов параметров перехвата потока вывода результатов от nmap.exe
+
+                //process.StartInfo.Arguments = string.Format("{0} {1}", Options, Target);
+                //process.StartInfo.WindowStyle = WindowStyle;
+                //process.StartInfo.RedirectStandardOutput = true;
+
+                //int lineCount = 0;
+                //StringBuilder output = new StringBuilder();
+
+                //process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
+                //{
+                //    // Prepend line numbers to each line of the output.
+                //    if (!String.IsNullOrEmpty(e.Data))
+                //    {
+                //        lineCount++;
+                //        output.Append("\n[" + lineCount + "]: " + e.Data);
+                //    }
+                //});
+                //process.BeginOutputReadLine();
+
+                // Synchronously read the standard output of the spawned process.
+                //StreamReader reader = process.StandardOutput;
+                //string output_nmap = reader.ReadToEnd();
+                #endregion
+
+                // Стартуем  сканирование
+                nmap_process.Start();
+                
+                // Ожидаем окончания сканирования
+                nmap_process.WaitForExit();
+
+                // Проверяем, создан ли XML файл результатов
+                if (!System.IO.File.Exists(output_xml_file))
+                {
+                    // Файл не создан
+                    // Это ошибка работы nmap.exe
+                    // Возвращаем ошибку
+                    error = "Ошибка! Не создан XML файл с результатами сканирования IP=" + ip_for_scan;
+                    return (error, scanItem);
+                }
+
+                // Распарсиваем результаты сканирования из XML файла
+                (string, ScanItem) result_scan = await NMap_ResultXML_Parser.ParsingFileXML_async( output_xml_file );
+                error    = result_scan.Item1;
+                scanItem = result_scan.Item2;
+            }
+
+            return (error, scanItem);
+        }
+
+
+
+
+
+
 
 
 

@@ -117,9 +117,9 @@ namespace Altex.Models
         /// Parser NMap result XML file
         /// </summary>
         /// <param name="path_file_xml">Path to XML file</param>
-        /// <returns>Resulting data, in  the form of a ScanItem</returns>
+        /// <returns>Кортеж( string, ScanItem ) Описание ошибки, Результат сканирования в структуре ScanItem</returns>
 
-        public static async Task<(string, ScanItem)> ParsingFileXML(string path_file_xml)
+        public static async Task<(string, ScanItem)> ParsingFileXML_async(string path_file_xml)
         {
             // Файл с данными это результат сканирования.
             // Есть варианты записи файлов результата

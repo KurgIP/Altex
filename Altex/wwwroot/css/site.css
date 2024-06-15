@@ -1,18 +1,18 @@
-html {
-  font-size: 14px;
-}
+html { font-size: 14px;}
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+  html { font-size: 16px; }
 }
+html { position: relative; min-height: 100%;}
+body { margin-bottom: 60px;}
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+/* Сообщения  */
+.hd {display:none;}
+#do_ajax  {z-index: 801; display: none; position: fixed; margin: auto; top: 50%; right: 50%; text-align: center; width: 50px; height: 50px; }
+#id_debug {z-index: 801; display: none; position: fixed; margin: auto; top:5px; right: 5px; text-align: center; width: 50px; height: 50px; overflow:auto; height:400px;}
+#id_error, #id_message {z-index: 802; display: none; position: fixed; margin: auto; top: 5px; left: 30%; text-align: center; background-color: #ffaaaf; border: solid 2px #ffff23; padding: 5px 10px; filter:opacity(80); opacity:0.8; color:#300;}
 
-body {
-  margin-bottom: 60px;
-}
+.txt_msg { font-size:14px; }
+.err_field{ border: solid 1px #982334; background-color:#eeadaf; }
+
+
