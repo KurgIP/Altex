@@ -154,6 +154,7 @@ namespace Altex.Models
             scanResult.Ports_list    = new List<Port>();
             scanResult.finished_time = DateTime.Now;
             scanResult.IP            = ip_for_scan;
+            scanResult.Start_scaning = DateTime.Now;
 
             #region // Проверка входных данных
             // Проверка пустого пути
