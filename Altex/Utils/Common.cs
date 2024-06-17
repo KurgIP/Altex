@@ -40,6 +40,7 @@ namespace Altex.Util
     public static class Commons
     {
         private static readonly CultureInfo _culture_info_en = new CultureInfo("en-US", false);
+        public  static Random               _randObj          = new Random( Convert.ToInt32(DateTime.Now.ToString("ssffffff")) );
 
         #region //================================================================== Проверка входных данных ====================================
 
@@ -75,7 +76,8 @@ namespace Altex.Util
             {
                 is_check = true;
 
-                string user_name = Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined": Startup._httpContextStatic.User.Identity.Name;
+                //HttpContext.Current
+                string user_name = ""; // Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined": Startup._httpContextStatic.User.Identity.Name;
                 Startup._logerStatic.LogWarning( message + ":[{val_param.ToString()}];", new string[] { place, user_name, error_type });
 
                 //Loger.EventInfo(Startup._httpContextAccessor.HttpContext.User.Identity.Name, place, error_type, message, is_req);
@@ -90,7 +92,7 @@ namespace Altex.Util
         {
             if (!val)
             {
-                string user_name = Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined" : Startup._httpContextStatic.User.Identity.Name;
+                string user_name = ""; // Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined" : Startup._httpContextStatic.User.Identity.Name;
                 Startup._logerStatic.LogWarning("Error! Key is wrong(Dict:" + dict + "[" + key + "]", new string[] { place, user_name });
 
                 //string message = "Key is wrong(Dict:" + dict + "[" + key + "]";
@@ -105,14 +107,14 @@ namespace Altex.Util
         {
             if (!dct_field_props.ContainsKey(name_param))
             {
-                string user_name = Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined" : Startup._httpContextStatic.User.Identity.Name;
+                string user_name = ""; // Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined" : Startup._httpContextStatic.User.Identity.Name;
                 Startup._logerStatic.LogWarning(message + ":[{name_param}];", new string[] { place_log, user_name });
                 return false;
             }
 
             if (String.IsNullOrWhiteSpace(dct_field_props[name_param]))
             {
-                string user_name = Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined" : Startup._httpContextStatic.User.Identity.Name;
+                string user_name = ""; // Startup._httpContextStatic.User.Identity.Name == null ? "user_undefined" : Startup._httpContextStatic.User.Identity.Name;
                 Startup._logerStatic.LogWarning(message + ":[{name_param}];", new string[] { place_log, user_name });
                 return false;
             }
@@ -123,24 +125,6 @@ namespace Altex.Util
         #endregion
 
 
-        ////****************************** Новый вариант
-        //public static Dictionary<string, FilterByColumn> get_filter_by_columns( string id_user, ref Dictionary<string, Dictionary<string, string>> fields_properties, int type_filter )
-        ////******************************
-        //{
-        //    string name_sess = "dct_filter_by_columns_" + type_filter;
-        //    if (HttpContext.Current.Session[name_sess] != null)
-        //    {
-        //        Dictionary<string, FilterByColumn> dct_filter_by_columns = (Dictionary<string, FilterByColumn>)HttpContext.Current.Session[name_sess];
-        //        return dct_filter_by_columns;
-        //    }
-        //    else
-        //    {
-        //        string user_pid = (string)Membership.GetUser().ProviderUserKey;
-        //        Dictionary<string, FilterByColumn> dct_filter_by_columns = UserUtil.get_FilterByColumn_products_by_pid(ref user_pid, ref type_filter, ref fields_properties);
-        //        HttpContext.Current.Session[name_sess] = dct_filter_by_columns;
-        //        return dct_filter_by_columns;
-        //    }
-        //}
 
         #region //================================================================== Parsing ====================================
 
@@ -461,7 +445,21 @@ namespace Altex.Util
 
         #endregion
 
-
+        //********************
+        public static string GenerateKey()
+        {
+            return Guid.NewGuid().ToString().GetHashCode().ToString("x");
+        }
+        public static int    GenerateNumber()
+        {
+            int num_int     = Guid.NewGuid().GetHashCode();
+            int num_positiv = Math.Abs(num_int);
+            return num_positiv;
+        }
+        public static int    GenerateKey_Number()
+        {
+            return _randObj.Next();
+        }
 
     }
 }

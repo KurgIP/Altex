@@ -16,3 +16,20 @@ body { margin-bottom: 60px;}
 .err_field{ border: solid 1px #982334; background-color:#eeadaf; }
 
 
+.tb_list_ports {border-collapse: collapse;  width: 100%;}
+
+
+.cntnr_block_scan_result { width: fit-content; margin: 10px 0px; border: 1px solid #6eadad; padding:10px 0px; border-radius: 8px; display: inline-block;}
+.block_ip { width:100%; padding-bottom: 10px;}
+.tb_ip {}
+.ip_prm { font-size:10px; padding: 1px 8px;}
+.tr_hdr_ip {border:1px solid #91afa8; background-color:#e3fcf5; border-width: 1px 0px;}
+.td_hdr{font-size:10px; font-weight:bold; color: #4b6f71; padding: 1px 7px;}
+
+.block_ports {width:100%; padding-left:50px;}
+.tb_list_ports{ }
+.block_port {width:100%;}
+.tr_hdr_port{border:1px solid #b4dad8; background-color: #e4f7f2; border-width: 1px 0px 1px 1px;}
+.port_prm{font-size:10px;}
+
+

@@ -19,16 +19,16 @@ using System.Text.RegularExpressions;
 
 namespace Altex.Controllers
 {
-    [Authorize(Roles = "SuperAdmin,Admin")]
+
     public abstract class ControllerExpand : Controller
     {
-        private readonly ILogger<Controller>          _logger;
-        private readonly HttpContext                  _httpContext;
+        private readonly ILogger<Controller>     _logger;
+        private readonly HttpContext             _httpContext;
 
-        public ControllerExpand( ILogger<Controller> logger, HttpContext context ) 
+        public ControllerExpand( ILogger<Controller> logger, IHttpContextAccessor httpContext )
         {
             _logger      = logger;
-            _httpContext = context;
+            _httpContext = httpContext.HttpContext;
         }
 
         #region //=========================================== convert =============================
@@ -36,7 +36,6 @@ namespace Altex.Controllers
         {
             // В ответе устанавливает код ошибки, что бы при обработке на клиенте обработка ответа перенаправилась на другой код
             // Ответ с обработкой ошибки всегда должен быть javascript, так как вставляется в DOM по eval(javascript)
-
 
             // Перезначение статус кода ответа на ajax запрос, указывает, что при обработке запроса произошла ошибка.
             // И ответ должен обрабатываться на клиенте в ветке для обработки ошибок

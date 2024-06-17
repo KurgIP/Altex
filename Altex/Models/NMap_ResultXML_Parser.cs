@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.CodeAnalysis.Differencing;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Drawing;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -38,18 +40,24 @@ namespace Altex.Models
 
     [Serializable]
     //*************************
-    public struct ScanItem
+    public struct ScanResult
     //*************************
     {
-        public string     IP;                  // IPv4 address
-        public string     MAC;                 // MAC address,
-        public string     Vendor;              // Имя вендора,
-        public string     Host;                // Имя хоста,
-        public DateTime   Start_scaning;       // Время начала сканирования,
-        public string     Status_state;        // Параметр state  в тэге Status,
-        public string     Status_reason;       // Параметр reason в тэге Status,
-        public List<Port> Ports_list;          // Имя хоста,
-
+        public string         IP;                  // IPv4 address
+        public string         MAC;                 // MAC address,
+        public string         Vendor;              // Имя вендора,
+        public string         Host;                // Имя хоста,
+        public string         Host_type;           // Тип хоста,        
+        public DateTime       Start_scaning;       // Время начала сканирования,
+        public string         Status_state;        // Параметр state  в тэге Status,
+        public string         Status_reason;       // Параметр reason в тэге Status,
+        public List<Port>     Ports_list;          // Имя хоста,
+        public ResponseStatus Response_status;     // Состояние ответа
+        public DateTime       finished_time;       // Время окончания сканирования
+        public float          finished_elapsed;    // Время  сканирования в сек.
+        public string         finished_exit;       // Флаг окончания сканирования
+        public string         runstats_up;         // Хост ответил
+        public string         runstats_down;       // Хост не ответил
 
         #region // Пример вывода данных о порте
         //LOCAL
@@ -110,6 +118,15 @@ namespace Altex.Models
         }
      }
 
+    public enum ResponseStatus : int
+    {
+        Success     = 0,
+        Not_answer  = 1,
+        Error       = 2,
+        ErrorSystem = 4,
+        Unknown     = 3
+    }
+
     public static class NMap_ResultXML_Parser
     {
 
@@ -117,9 +134,9 @@ namespace Altex.Models
         /// Parser NMap result XML file
         /// </summary>
         /// <param name="path_file_xml">Path to XML file</param>
-        /// <returns>Кортеж( string, ScanItem ) Описание ошибки, Результат сканирования в структуре ScanItem</returns>
+        /// <returns>Кортеж( string, ScanResult ) Описание ошибки, Результат сканирования в структуре ScanResult</returns>
 
-        public static async Task<(string, ScanItem)> ParsingFileXML_async(string path_file_xml)
+        public static async Task<(string, ScanResult)> ParsingFileXML_async( string path_file_xml, string ip_for_scan )
         {
             // Файл с данными это результат сканирования.
             // Есть варианты записи файлов результата
@@ -129,32 +146,47 @@ namespace Altex.Models
             // Проблемы с 2 вариантом: Будет сохраняться слишком много файлов.
             // Что предпочтительнее не оговорено, поэтому принимаем к исполнению 1 вариант
 
-            string   error      = String.Empty;
-            string   file_text  = "";
-            ScanItem scanItem   = new ScanItem();
-            scanItem.Ports_list = new List<Port>();
+            string     error         = String.Empty;
+            string     file_text     = "";
+
+            // Инициализация структуры ScanResult начальными данными.
+            ScanResult scanResult    = new ScanResult();
+            scanResult.Ports_list    = new List<Port>();
+            scanResult.finished_time = DateTime.Now;
+            scanResult.IP            = ip_for_scan;
 
             #region // Проверка входных данных
             // Проверка пустого пути
             if (String.IsNullOrWhiteSpace(path_file_xml))
             {
+                // Обработка ошибки
                 error = "Путь к файлу не может быть пустым";
-                return (error, scanItem);
+                scanResult.Response_status = ResponseStatus.ErrorSystem;
+                return (error, scanResult);
             }
 
             // Проверка наличия файла
             if (!File.Exists(path_file_xml))
             {
+                // Обработка ошибки
                 error = "Файл по указанному пути:" + path_file_xml + " не найден.";
-                return (error, scanItem);
+                scanResult.Response_status = ResponseStatus.ErrorSystem;
+                return (error, scanResult);
             }
 
-            // Считываем весь текст из файла
-
-            // Считываем из файла всесь текст
-            using (StringReader stringReader = new StringReader(path_file_xml))
+            try
             {
-                file_text = await stringReader.ReadToEndAsync();
+                // Считываем из файла весь текст
+                using (StreamReader string_reader = new StreamReader(path_file_xml))
+                {
+                    file_text = await string_reader.ReadToEndAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                scanResult.Response_status = ResponseStatus.ErrorSystem;
+                return (error, scanResult);
             }
 
             // Проверка XML формата файла
@@ -162,49 +194,228 @@ namespace Altex.Models
 
             if (!rgx_xlm.IsMatch(file_text))
             {
+                // Обработка ошибки
                 error = "Указанный файл:" + path_file_xml + " не в XML формате.";
-                return (error, scanItem);
+                scanResult.Response_status = ResponseStatus.Error;
+                return (error, scanResult);
             }
             #endregion
 
 
             #region // Парсинг данных
 
-            // Выбираем текст блока <host... </host>
-            Regex rgx_block_host   = new Regex(@"<host.+?>(.+?)</host>", RegexOptions.None);
+            // Парсим блок runstats, в котором указан результат запуска программы nmap.exe
+            error = Parsing_block_runstats( file_text, ref scanResult );
+
+            if ( !String.IsNullOrWhiteSpace(error) )
+            {
+                // Обработка ошибки
+                error                      = "Отсутствие или ошибка при распарсивании блока runstats";
+                scanResult.Response_status = ResponseStatus.Error;
+                return (error, scanResult);
+            }            
+
+
+            #region// Выбираем текст блока <host... </host>
+            Regex rgx_block_host   = new Regex(@"<host .+?>(.+?)<\/host>", RegexOptions.Singleline );
             Match m_rgx_block_host = rgx_block_host.Match(file_text);
 
             string block_host_txt = "";
-            if ( m_rgx_block_host.Success )
+            if ( !m_rgx_block_host.Success )
             {
-                // Найден блок <host... </host>
-                block_host_txt = m_rgx_block_host.Groups[1].Value;
+                // Блок <host... </host> не найден
+                // Это не ошибка, так как блока <host> может и не быть в результатах
+                // Например: из-за не ответа хоста и тд
+                // Что значит, что сканирование было, но ответа от хоста с этим IP не было
+                error = "";
+                scanResult.Response_status = ResponseStatus.Not_answer;
+                return (error, scanResult);
             }
+
+            // В этом блоке все данные результата сканирования
+            block_host_txt = m_rgx_block_host.Groups[1].Value;
+            #endregion
 
             #region // Выбираем нужные параметры из этого блока
 
             // Получаем параметры тэга STATUS в виде кортежа значений (state, reason )
             (string, string) status_params = Parsing_tag_status( block_host_txt );
 
-            scanItem.Status_state  = status_params.Item1;
-            scanItem.Status_reason = status_params.Item2;
+            scanResult.Status_state  = status_params.Item1;
+            scanResult.Status_reason = status_params.Item2;
+
+
+            // Получаем параметры тэгов HOSTNAMES в виде кортежа значений (host_name, host_type)
+            (string, string) hostnames_params = Parsing_tag_hostnames(block_host_txt);
+
+            scanResult.Host      = hostnames_params.Item1;
+            scanResult.Host_type = hostnames_params.Item1;
 
             // Получаем параметры тэгов ADDRESS в виде кортежа значений (IP, MAC, vendor)
             (string, string, string) address_params = Parsing_tag_address( block_host_txt );
 
-            scanItem.IP     = address_params.Item1;
-            scanItem.MAC    = address_params.Item2;
-            scanItem.Vendor = address_params.Item3;
+            scanResult.IP     = address_params.Item1;
+            scanResult.MAC    = address_params.Item2;
+            scanResult.Vendor = address_params.Item3;
 
             // Получаем список портов с параметрами
-            scanItem.Ports_list = Parsing_tag_ports( block_host_txt );
+            scanResult.Ports_list = Parsing_tag_ports( block_host_txt );
 
             #endregion
 
             #endregion
 
-            return (error, scanItem);
+            scanResult.Response_status = ResponseStatus.Success;
+            return (error, scanResult);
         }
+
+        /// <summary>
+        /// Парсер значений в блоке runstats
+        /// </summary>
+        /// <param name="file_text">Текст результата сканирования из XML файла</param>
+        /// <param name="scanResult">Переданный по ссылке ScanResult, для заполнения распарсенными данными</param>
+        /// <returns>Error as string, ScanResult as ref </returns>
+        private static string Parsing_block_runstats( string file_text, ref ScanResult scanResult)
+        {
+            // Парсим блок runstats, в котором указан результат запуска программы nmap.exe
+
+            #region // Пример вывода блока runstats
+            // Результат: Host ответил и мы просканировали его
+            //<runstats>
+            //<finished time="1718230065" timestr="Thu Jun 13 01:07:45 2024" summary="Nmap done at Thu Jun 13 01:07:45 2024; 1 IP address (1 host up) scanned in 12.64 seconds" elapsed="12.64" exit="success" />
+            //<hosts up="1" down ="0" total="1" />
+            //</runstats>
+
+            // Результат: Host не ответил и данных по нему нет
+            //<runstats>
+            //<finished time ="1718631660" timestr="Mon Jun 17 16:41:00 2024" summary="Nmap done at Mon Jun 17 16:41:00 2024; 1 IP address (1 host up) scanned in 24.60 seconds" elapsed="24.60" exit="success" />
+            //<hosts up="1" down="0" total="1" />
+            //</runstats>
+            #endregion
+
+            string error = "";
+
+            // Выбираем текст блока <runstats... </runstats>
+            Regex rgx_block_runstats   = new Regex( @"<runstats>(.+?)<\/runstats>", RegexOptions.Singleline );
+            Match m_rgx_block_runstats = rgx_block_runstats.Match( file_text );
+
+            if ( !m_rgx_block_runstats.Success )
+            {
+                // Блок <runstats> не найден
+                error = "Блок <runstats> в XML результатах сканирования не найден";
+                scanResult.Response_status = ResponseStatus.Error;
+                return error;
+            }
+
+            // Текст в блоке runstats
+            string block_runstats_txt = m_rgx_block_runstats.Groups[1].Value.Trim();
+
+            string prm_finished_time    = "";
+            string prm_finished_elapsed = "";
+            string prm_finished_exit    = "";
+            string prm_hosts_up         = "";
+            string prm_hosts_down       = "";
+
+            #region // Ищем в блоке тэг finished
+            Regex rgx_tag_finished   = new Regex( @"<finished (.+?)/>", RegexOptions.Singleline );
+            Match m_rgx_tag_finished = rgx_tag_finished.Match( block_runstats_txt );
+
+            if ( m_rgx_tag_finished.Success )
+            {
+                // Найден тэг finished
+                // Получаем текст в тэге
+                string tag_finished_txt = m_rgx_tag_finished.Groups[1].Value;
+
+                #region // Ищем значение параметра time 
+                Regex rgx_prm_finished_time   = new Regex("timestr=\"(.+?)\"", RegexOptions.None);
+                Match m_rgx_prm_finished_time = rgx_prm_finished_time.Match( tag_finished_txt );
+
+                if ( m_rgx_prm_finished_time.Success )
+                {
+                    prm_finished_time = m_rgx_prm_finished_time.Groups[1].Value;
+                }
+                #endregion
+
+                #region // Ищем значение параметра elapsed 
+                Regex rgx_prm_finished_elapsed   = new Regex("elapsed=\"(.+?)\"", RegexOptions.None);
+                Match m_rgx_prm_finished_elapsed = rgx_prm_finished_elapsed.Match(tag_finished_txt);
+
+                if ( m_rgx_prm_finished_elapsed.Success )
+                {
+                    prm_finished_elapsed = m_rgx_prm_finished_elapsed.Groups[1].Value;
+                }
+                #endregion
+
+                #region // Ищем значение параметра elapsed 
+                Regex rgx_prm_finished_exit   = new Regex("exit=\"(.+?)\"", RegexOptions.None);
+                Match m_rgx_prm_finished_exit = rgx_prm_finished_exit.Match( tag_finished_txt );
+
+                if (m_rgx_prm_finished_exit.Success)
+                {
+                    prm_finished_exit = m_rgx_prm_finished_exit.Groups[1].Value;
+                }
+                #endregion 
+            }
+            #endregion
+
+            #region // Ищем в блоке тэг hosts
+            Regex rgx_tag_hosts   = new Regex( @"<hosts (.+?)/>", RegexOptions.Singleline );
+            Match m_rgx_tag_hosts = rgx_tag_hosts.Match( block_runstats_txt );
+
+            if ( m_rgx_tag_hosts.Success )
+            {
+                // Найден тэг hosts
+                // Получаем текст в тэге
+                string tag_hosts_txt = m_rgx_tag_hosts.Groups[1].Value;
+
+                #region // Ищем значение параметра up 
+                Regex rgx_prm_hosts_up   = new Regex( "up=\"(.+?)\"", RegexOptions.Singleline );
+                Match m_rgx_prm_hosts_up = rgx_prm_hosts_up.Match( tag_hosts_txt );
+
+                if ( m_rgx_prm_hosts_up.Success )
+                {
+                    prm_hosts_up = m_rgx_prm_hosts_up.Groups[1].Value;
+                }
+                #endregion
+
+                #region // Ищем значение параметра down 
+                Regex rgx_prm_hosts_down   = new Regex( "down=\"(.+?)\"", RegexOptions.Singleline );
+                Match m_rgx_prm_hosts_down = rgx_prm_hosts_down.Match( tag_hosts_txt );
+
+                if ( m_rgx_prm_hosts_down.Success )
+                {
+                    prm_hosts_down = m_rgx_prm_hosts_down.Groups[1].Value;
+                }
+                #endregion
+            }
+            #endregion 
+
+            // Вносим полученные параметры сканирование в структуру ScanResult
+
+            // Получаем время в тиках
+            //int time_tick = int.Parse( prm_finished_time );
+            // Переводим тики во время
+            //scanResult.finished_time    = DateTime.Parse( prm_finished_time );
+
+            scanResult.finished_elapsed = Convert.ToSingle( prm_finished_elapsed, CultureInfo.InvariantCulture );
+            scanResult.finished_exit    = prm_finished_exit;
+            scanResult.runstats_up      = prm_hosts_up;
+            scanResult.runstats_down    = prm_hosts_down;
+
+
+            // Определяем статус окончания сканирования
+            scanResult.Response_status = ResponseStatus.Unknown;
+
+            if ( scanResult.runstats_up == "1" && scanResult.runstats_down == "0" )
+                scanResult.Response_status = ResponseStatus.Success;
+
+            if (scanResult.runstats_up == "0" && scanResult.runstats_down == "1")
+                scanResult.Response_status = ResponseStatus.Not_answer;
+
+            return error;
+        }
+
+
 
         /// <summary>
         /// Парсер значений параметров в тэге Status
@@ -256,6 +467,78 @@ namespace Altex.Models
             // Возвращаем кортеж параметров
             return ( prm_state, prm_reason );
         }
+
+
+        /// <summary>
+        /// Парсер значений параметров в тэге hostnames
+        /// </summary>
+        /// <param name="block_host_txt">Текст в блоке host</param>
+        /// <returns>(host_name, host_type)</returns>
+        private static (string, string) Parsing_tag_hostnames(string block_host_txt)
+        {
+            #region  // Пример вывода результатов работы NMAP  в виде XML текста тэга STATUS
+            // hostnames></hostnames>
+            // <hostnames>
+            //      <hostname name="dns.google" type="PTR" />
+            // </hostnames >
+            #endregion
+
+            string prm_host_name = "";
+            string prm_host_type = "";
+
+            // Ищем в блоке тэг Status
+            Regex rgx_block_hostnames   = new Regex(@"<hostnames>(.+?)</hostnames>", RegexOptions.Singleline );
+            Match m_rgx_block_hostnames = rgx_block_hostnames.Match( block_host_txt );
+
+            string block_hostnames_txt = "";
+            if ( m_rgx_block_hostnames.Success)
+            {
+                // Найден блок hostnames.../>
+                // Получаем текст в этом блоке
+                block_hostnames_txt = m_rgx_block_hostnames.Groups[1].Value.Trim();
+
+                if (String.IsNullOrWhiteSpace(block_hostnames_txt))
+                    return (prm_host_name, prm_host_type);
+
+
+                #region // В блоке hostnames есть тэги описывающие параметры имени хоста
+
+                Regex rgx_params_hostname   = new Regex(@"<hostname (.+?)/>", RegexOptions.None);
+                Match m_rgx_params_hostname = rgx_params_hostname.Match( block_hostnames_txt );
+                if ( m_rgx_params_hostname.Success )
+                {
+                    // Тэг <hostname> найден
+                    string params_hostname_txt = m_rgx_params_hostname.Groups[1].Value.Trim();
+
+                    #region // Получаем параметр NAME                  
+                    Regex rgx_prm_name   = new Regex("name=\"(.+?)\"", RegexOptions.None);
+                    Match m_rgx_prm_name = rgx_prm_name.Match( params_hostname_txt );
+
+                    if (m_rgx_prm_name.Success)
+                    {
+                        prm_host_name = m_rgx_prm_name.Groups[1].Value;
+                    }
+                    #endregion
+
+
+                    #region // Получаем параметр TYPE                 
+                    Regex rgx_prm_type   = new Regex("type=\"(.+?)\"", RegexOptions.None);
+                    Match m_rgx_prm_type = rgx_prm_type.Match(params_hostname_txt);
+
+                    if (m_rgx_prm_type.Success)
+                    {
+                        prm_host_type = m_rgx_prm_type.Groups[1].Value;
+                    }
+                    #endregion
+
+                }
+                #endregion
+            }
+
+            // Возвращаем кортеж параметров
+            return (prm_host_name, prm_host_type);
+        }
+
 
 
         /// <summary>
@@ -333,7 +616,7 @@ namespace Altex.Models
                             break;
 
                         case "mac":
-                            MAC = "";
+                            MAC = prm_addr;
                             break;
                     }                
                 }
@@ -374,7 +657,7 @@ namespace Altex.Models
             string block_ports_txt = "";
 
             // Ищем в блоке тэг PORTS
-            Regex rgx_block_ports    = new Regex( @"<ports (.+?)</ports>", RegexOptions.None );
+            Regex rgx_block_ports    = new Regex( @"<ports>(.+?)</ports>", RegexOptions.Singleline );
             Match m_rgx_block_ports  = rgx_block_ports.Match( block_host_txt );
             if ( m_rgx_block_ports.Success )
             {

@@ -5,8 +5,16 @@
 <div class="text-center">
     <h1 class="display-4">Сканировани IP адресов</h1>
 
-    <input id="tx_ip" type="text" value="8.8.8.8"/>
-    <input type="button" value="Начать сканирование" onclick="_scaner.scan()"/>
+    <table>
+        <tr>
+            <td colspan="3">Выбрать диапазон сканирования: <input id="is_ip_range" type="checkbox" onclick="_scaner.set_ip_range()" /></td>
+        </tr>
+        <tr>
+            <td><input id="ip_start"  type="text" value="192.168.0.1" /></td>
+            <td><input id="ip_finish" type="text" value="192.168.0.255" disabled /></td>
+            <td><input type="button" value="Начать сканирование" onclick="_scaner.scan()" /></td>
+        </tr>
+    </table>
 
     <div id="cntnr_result_scan"></div>
     

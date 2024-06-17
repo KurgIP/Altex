@@ -1,0 +1,100 @@
+﻿@{
+    List<ScanResult> list_scanResults = (List<ScanResult>)ViewData["list_scanResults"];
+}
+
+<div class="cntnr_block_scan_result">
+
+    @foreach (ScanResult scanResult in list_scanResults)
+{
+    <div class="block_ip">
+       <table class="tb_ip">
+          <tr class="tr_hdr_ip">
+                <td class="td_hdr">IP</td>
+                <td class="td_hdr">Host</td>
+                <td class="td_hdr">Host_type</td>
+                <td class="td_hdr">MAC</td>
+                <td class="td_hdr">Vendor</td>
+                <td class="ip_prm">Response_status</td>
+                <td class="ip_prm">Start_scaning</td>
+                <td class="ip_prm">runstats_up</td>
+                <td class="ip_prm">runstats_down</td>
+                <td class="td_hdr">Status_reason</td>
+                <td class="td_hdr">Status_state</td>
+            </tr>
+            <tr class="block_port">
+                <td class="ip_prm">
+                     @scanResult.IP
+                </td>
+                <td class="ip_prm">
+                     @scanResult.Host
+                </td>
+                <td class="ip_prm">
+                     @scanResult.Host_type
+                </td>
+                <td class="ip_prm">
+                     @scanResult.MAC
+                </td>
+                <td class="ip_prm">
+                     @scanResult.Vendor
+                </td>
+                <td class="ip_prm">
+                    @scanResult.Response_status
+                </td>                    
+                <td class="ip_prm">
+                        @scanResult.Start_scaning
+                </td>
+                <td class="ip_prm">
+                    @scanResult.runstats_up
+                </td>
+                <td class="ip_prm">
+                    @scanResult.runstats_down
+                </td>
+                <td class="ip_prm">
+                     @scanResult.Status_reason
+                </td>
+                <td class="ip_prm">
+                     @scanResult.Status_state
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div class="block_ports">
+            <table class="tb_list_ports">
+                <tr class="tr_hdr_port">
+                    <td class="td_hdr">ID </td>
+                    <td class="td_hdr">Method</td>
+                    <td class="td_hdr">Protocol</td>
+                    <td class="td_hdr">Reason</td>
+                    <td class="td_hdr">Service</td>
+                    <td class="td_hdr">State</td>
+                </tr>
+    @foreach (Port port in scanResult.Ports_list)
+    {
+            <tr class="block_port">
+                <td class="port_prm">
+                    @port.ID
+                </td>
+                <td class="port_prm">
+                    @port.Method
+                </td>
+                <td class="port_prm">
+                    @port.Protocol
+                </td>
+                <td class="port_prm">
+                    @port.Reason
+                </td>
+                <td class="port_prm">
+                    @port.Service
+                </td>
+                <td class="port_prm">
+                    @port.State
+                </td>
+            </tr> 
+    }
+            </table>
+    </div>
+
+
+} 

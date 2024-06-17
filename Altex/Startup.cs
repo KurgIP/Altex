@@ -28,32 +28,27 @@ namespace Altex
 {
     public class Startup
     {
-        public static  string              _serverRootPath       { get; private set; } = "";
-        public static  HttpContext         _httpContextStatic    { get; private set; }
-        public static  ILogger<Controller> _logerStatic          { get; private set; }
-        public static  IConfiguration      _configurationStatic  { get; private set; }
-        
+        public static  string                _serverRootPath       { get; private set; } = "";
+        public static  ILogger<Controller>   _logerStatic          { get; private set; }
+        public static  IConfiguration        _configurationStatic  { get; private set; }
+        public static  IHttpContextAccessor  _httpContextAccessor  { get; private set; }
+        public         IConfiguration        Configuration         { get; }
 
-
-        public IConfiguration Configuration { get; }
-
-        //public static IConfiguration StaticConfig { get; private set; }
-        
-        //public static IHttpContextAccessor _httpContextAccessor { get; private set; }
+        //public static IConfiguration StaticConfig { get; private set; }        
         //public static UserManager<ApplicationUser> _StaticUserManager { get; private set; }
-
-        public Startup(IHostingEnvironment env, IConfiguration configuration, HttpContext context, ILogger<Controller> logger ) //
+        //public static ApplicationUser     _app_user            { get; private set; }
+        //public static ILoggerManager _logger { get; private set; }
+        // public Startup(IHostingEnvironment env, IConfiguration configuration, HttpContext context, ILogger<Controller> logger ) //, IHttpContextAccessor contextAccessor, ILogger<Controller> logger
+        
+        public Startup(IHostingEnvironment env, IConfiguration configuration) //
         {
             Configuration        = configuration;
             _serverRootPath      = env.ContentRootPath;
-            _httpContextStatic   = context;
-            _logerStatic         = logger;
             _configurationStatic = configuration;
+            //_httpContextAccessor = contextAccessor;
+            //_httpContextStatic   = context;
+            //_logerStatic         = logger;
         }
-
-        //public static ApplicationUser     _app_user            { get; private set; }
-
-        //public static ILoggerManager _logger { get; private set; }
 
 
 
@@ -61,7 +56,8 @@ namespace Altex
         public void ConfigureServices(IServiceCollection services)
         {
             string postgreSq_lConnection = Configuration.GetConnectionString("PostgreSqlConnection");
-            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            //services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddHttpContextAccessor();
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(postgreSq_lConnection) 
@@ -110,12 +106,15 @@ namespace Altex
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, UserManager<ApplicationUser> manager) //
+        public void Configure( IApplicationBuilder app, IHostingEnvironment env, UserManager<ApplicationUser> manager, ILogger<Controller> logger, IHttpContextAccessor contextAccessor ) //
         {
-            //_httpContextAccessor = httpContextAccessor;
-            _serverRootPath = env.ContentRootPath;
-            //_StaticUserManager = manager;
+            _httpContextAccessor = contextAccessor;
+            _serverRootPath      = env.ContentRootPath;
+            _logerStatic         = logger;
 
+            //_StaticUserManager = manager;
+            //_httpContextStatic = context;
+            //_httpContextStatic = context;
             // setup app's root folders
             //AppDomain.CurrentDomain.SetData("ContentRootPath", env.ContentRootPath);
             //AppDomain.CurrentDomain.SetData("WebRootPath", env.EnvironmentName);
@@ -136,7 +135,6 @@ namespace Altex
                 app.UseHsts();
             }
 
-            //if (env.IsDevelopment())
             if (env.IsDevelopment())
             {
                 app.UseHttpsRedirection();

@@ -16,10 +16,13 @@ using Microsoft.AspNetCore.Authorization;
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Net.Http;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Altex.Util;
 
 namespace Altex.Controllers
 {
-    [Authorize(Roles = "SuperAdmin,Admin")]
+    //[Authorize(Roles = "SuperAdmin,Admin")]
     public class ScanerController : ControllerExpand
     {
 
@@ -31,7 +34,8 @@ namespace Altex.Controllers
 
 
         private readonly ILogger<Controller>          _logger;
-        private readonly HttpContext                  _context;
+        //private readonly HttpContext                  _context;
+        private readonly IHttpContextAccessor         _httpContext;
         private readonly UserManager<ApplicationUser> _userManager;
 
         private static string  _nmap_programm_path      = "";
@@ -40,11 +44,13 @@ namespace Altex.Controllers
         private static string  _contentRootPath         = "";
         private static string  _nmap_result_folder_path = "";
         
-        public ScanerController( ILogger<Controller> logger, HttpContext context, IConfiguration configuration, UserManager<ApplicationUser> userManager) : base( logger, context )
+        public ScanerController( ILogger<Controller> logger, IConfiguration configuration, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContext) : base(logger, httpContext)//base( logger, context )HttpContext context, 
         {
             _userManager = userManager;
             _logger      = logger;
-            _context     = context;
+            _httpContext = httpContext;
+            //_context     = context;
+            // IHttpContextAccessor _context = Startup._httpContextAccessor;
 
             // Устанавливаем параметры NMap из файла настроек
             _nmap_programm_path      = configuration.GetSection("NMap_Settings").GetValue<string>("programm_path");
@@ -63,27 +69,36 @@ namespace Altex.Controllers
             // Для каждого потока указываем свой файл вывода XML результатов
 
 
+            // Получаем время в тиках
+            long time_tick = long.Parse("1718230065");
+
+            // Переводим тики во время
+            //DateTime finished_time = Convert.ToDateTime.(time_tick);
+            DateTime datetime = new DateTime(time_tick);
+
             string ip_address ="10.0.0.10"; //"108.170.227.82"; //
+
+            var ipAddres = System.Net.IPAddress.Parse(ip_address);
 
             try
             {
-                string strHostName   = "www.contoso.com";
-                 IPHostEntry hostInfo = Dns.GetHostEntry(strHostName);  //;
-                IPHostEntry ipEntry  = Dns.GetHostEntry(strHostName);
-                IPAddress[] addr     = ipEntry.AddressList;
+                //string strHostName   = "www.contoso.com";
+                // IPHostEntry hostInfo = Dns.GetHostEntry(strHostName);  //;
+                //IPHostEntry ipEntry  = Dns.GetHostEntry(strHostName);
+                //IPAddress[] addr     = ipEntry.AddressList;
 
-                IPAddress ipadr = IPAddress.Parse(ip_address);
-                IPHostEntry ipEntry3 = Dns.GetHostEntry(ipadr);
+                //IPAddress ipadr = IPAddress.Parse(ip_address);
+                //IPHostEntry ipEntry3 = Dns.GetHostEntry(ipadr);
 
-                string      strHostName_2 = Dns.GetHostName();
-                IPHostEntry ipEntry2      = Dns.GetHostEntry(strHostName_2);
+                //string      strHostName_2 = Dns.GetHostName();
+                //IPHostEntry ipEntry2      = Dns.GetHostEntry(strHostName_2);
 
-                IPAddress ipadr4 = IPAddress.Parse("194.187.204.194");
-                IPHostEntry ipEntry4 = Dns.GetHostEntry(ipadr4);
+                //IPAddress ipadr4 = IPAddress.Parse("194.187.204.194");
+                //IPHostEntry ipEntry4 = Dns.GetHostEntry(ipadr4);
 
 
-                IPAddress ipadr5 = IPAddress.Parse("192.178.241.70");
-                IPHostEntry ipEntry5 = Dns.GetHostEntry(ipadr4);
+                //IPAddress ipadr5 = IPAddress.Parse("192.178.241.70");
+                //IPHostEntry ipEntry5 = Dns.GetHostEntry(ipadr4);
 
                 //{ 20.236.44.162}
 
@@ -94,14 +109,15 @@ namespace Altex.Controllers
                 // Discard PingExceptions and return false;
             }
 
-            //(string, ScanItem) result_scan = await Scan_IP_async(ip_address);
+            //(string, ScanResult) result_scan = await Scan_IP_async(ip_address);
 
             return View();
         }
 
         public async Task<ActionResult> aj_scanning()
         {
-            // Перехват потока вывода результатов сканирования nmap.exe не перехватывает поток в XML файл, а только стандартный поток в консоль.
+            // Перехват потока вывода результатов сканирования nmap.exe
+            // Не перехватывается поток в XML файл, а только стандартный поток в консоль.
             // Так как вывод результатов в XML самый полный по данным, придётся получать данные результатов сканирования через XML файл.
             // Для каждого запушеного для сканирования экземпляра nmap.exe указываем свой файл вывода XML результатов
             string log_place = "ScanerController.aj_scanning";
@@ -130,97 +146,143 @@ namespace Altex.Controllers
 
             #endregion
 
-            // Производим сканирование  указанных
+            // Переводим входные данные в диапазон IP
+            IPAddress ip_from = IPAddress.Parse( ip_address_start  );
+            IPAddress ip_to   = IPAddress.Parse( ip_address_finish );
 
-            _userManager.
-            string ip_address = "10.0.0.10"; //"108.170.227.82"; //
+            // Получаем список IP адресов диапазона
+            List<IPAddress> list_ipAddres_range  = GetIPList( ip_from, ip_to);
 
 
-            (string, ScanItem) result_scan = await Scan_IP_async(ip_address);
+            List<ScanResult> list_scanResults = new List<ScanResult>();
 
-            return View();
-        }
-        private static async Task<(string, ScanItem)> Scan_IP_async( string ip_for_scan )
-        {
-            string   error    = String.Empty;
-            ScanItem scanItem = new ScanItem();
-
-            //string contentRootPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-
-            //string path_nmap = "C:/Program Files (x86)/Nmap/nmap.exe";
-            //string OutputPath = Path.Combine(contentRootPath, "nmap_results/nmap_result.txt");
-            //OutputPath = "C:/projects/Altex/Altex/nmap_results/nmap_rst.xml";
-            // C:/ projects/Altex/Altex/nmap_results/nmap_rst.txt";
-
-            string output_xml_file = "";
-            using ( var nmap_process = new Process() )
+            // Производим сканирование  указанных адресов
+            foreach ( IPAddress ip_address in list_ipAddres_range )
             {
-                nmap_process.StartInfo.FileName        = _nmap_programm_path;
-                nmap_process.StartInfo.UseShellExecute = false;
+                string              ip_address_text = ip_address.ToString();
+                (string, ScanResult) result_scan    = await Scan_IP_async( ip_address_text );
 
-                string process_name    = nmap_process.ProcessName;
-                output_xml_file        = _nmap_result_folder_path + "/" + _nmap_result_file_XML + "_" + process_name + ".xml";
-                string arguments       = " -O " + ip_for_scan + " -oX " + output_xml_file;
-
-                nmap_process.StartInfo.Arguments = arguments;
-
-                #region // ненужный код 
-                // Временно оставил для тестов параметров перехвата потока вывода результатов от nmap.exe
-
-                //process.StartInfo.Arguments = string.Format("{0} {1}", Options, Target);
-                //process.StartInfo.WindowStyle = WindowStyle;
-                //process.StartInfo.RedirectStandardOutput = true;
-
-                //int lineCount = 0;
-                //StringBuilder output = new StringBuilder();
-
-                //process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
-                //{
-                //    // Prepend line numbers to each line of the output.
-                //    if (!String.IsNullOrEmpty(e.Data))
-                //    {
-                //        lineCount++;
-                //        output.Append("\n[" + lineCount + "]: " + e.Data);
-                //    }
-                //});
-                //process.BeginOutputReadLine();
-
-                // Synchronously read the standard output of the spawned process.
-                //StreamReader reader = process.StandardOutput;
-                //string output_nmap = reader.ReadToEnd();
-                #endregion
-
-                // Стартуем  сканирование
-                nmap_process.Start();
-                
-                // Ожидаем окончания сканирования
-                nmap_process.WaitForExit();
-
-                // Проверяем, создан ли XML файл результатов
-                if (!System.IO.File.Exists(output_xml_file))
-                {
-                    // Файл не создан
-                    // Это ошибка работы nmap.exe
-                    // Возвращаем ошибку
-                    error = "Ошибка! Не создан XML файл с результатами сканирования IP=" + ip_for_scan;
-                    return (error, scanItem);
-                }
-
-                // Распарсиваем результаты сканирования из XML файла
-                (string, ScanItem) result_scan = await NMap_ResultXML_Parser.ParsingFileXML_async( output_xml_file );
-                error    = result_scan.Item1;
-                scanItem = result_scan.Item2;
+                // Сохраняем в список полученный результат
+                list_scanResults.Add( result_scan.Item2 );
             }
 
-            return (error, scanItem);
+            ViewData["list_scanResults"] = list_scanResults;
+
+            return PartialView("block_scan_result");
+        }
+        private static async Task<(string, ScanResult)> Scan_IP_async( string ip_for_scan )
+        {
+            string     error      = String.Empty;
+            ScanResult scanResult = new ScanResult();
+
+            try
+            {
+                string output_xml_file = "";
+                using (var nmap_process = new Process())
+                {
+                    nmap_process.StartInfo.FileName        = _nmap_programm_path;
+                    nmap_process.StartInfo.UseShellExecute = false;
+
+                    string process_name = DateTime.Now.ToString("MM_dd_hh_mm_ss_") + Commons.GenerateKey_Number().ToString();
+                    output_xml_file     = _nmap_result_folder_path + "/" + _nmap_result_file_XML + "_" + process_name + ".xml";
+                    string arguments    = " -O " + ip_for_scan + " -oX " + output_xml_file;
+
+                    nmap_process.StartInfo.Arguments = arguments;
+
+                    #region // ненужный код 
+                    // Временно оставил для тестов параметров перехвата потока вывода результатов от nmap.exe
+
+                    //process.StartInfo.Arguments = string.Format("{0} {1}", Options, Target);
+                    //process.StartInfo.WindowStyle = WindowStyle;
+                    //process.StartInfo.RedirectStandardOutput = true;
+
+                    //int lineCount = 0;
+                    //StringBuilder output = new StringBuilder();
+
+                    //process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
+                    //{
+                    //    // Prepend line numbers to each line of the output.
+                    //    if (!String.IsNullOrEmpty(e.Data))
+                    //    {
+                    //        lineCount++;
+                    //        output.Append("\n[" + lineCount + "]: " + e.Data);
+                    //    }
+                    //});
+                    //process.BeginOutputReadLine();
+
+                    // Synchronously read the standard output of the spawned process.
+                    //StreamReader reader = process.StandardOutput;
+                    //string output_nmap = reader.ReadToEnd();
+                    #endregion
+
+                    // Стартуем  сканирование
+                    nmap_process.Start();
+
+                    // Ожидаем окончания сканирования
+                    nmap_process.WaitForExit();
+
+                    // Проверяем, создан ли XML файл результатов
+                    if ( !System.IO.File.Exists(output_xml_file) )
+                    {
+                        // Файл не создан
+                        // Это ошибка работы nmap.exe
+                        // Возвращаем ошибку
+                        error = "Ошибка! Не создан XML файл с результатами сканирования IP=" + ip_for_scan;
+                        return (error, scanResult);
+                    }
+
+                    // Распарсиваем результаты сканирования из XML файла
+                    (string, ScanResult) result_scan = await NMap_ResultXML_Parser.ParsingFileXML_async( output_xml_file, ip_for_scan );
+                    error      = result_scan.Item1;
+                    scanResult = result_scan.Item2;
+                }
+            }
+            catch ( Exception ex )
+            {
+                error = ex.Message;
+            }
+
+
+            return (error, scanResult);
         }
 
 
+        private List<IPAddress> GetIPList(IPAddress ipFrom, IPAddress ipTo)
+        {
+            List<IPAddress> ipList    = new List<IPAddress>();
+            String[]        arrayFrom = ipFrom.ToString().Split(new Char[] { '.' });
+            String[]        arrayTo   = ipTo.ToString().Split(new Char[] { '.' });
 
+            long firstIP = (long)(Math.Pow(256, 3) * Convert.ToInt32(arrayFrom[0]) + Math.Pow(256, 2) * Convert.ToInt32(arrayFrom[1]) + Math.Pow(256, 1) * Convert.ToInt32(arrayFrom[2]) + Convert.ToInt32(arrayFrom[3]));
+            long lastIP  = (long)(Math.Pow(256, 3) * Convert.ToInt32(arrayTo[0])   + Math.Pow(256, 2) * Convert.ToInt32(arrayTo[1])   + Math.Pow(256, 1) * Convert.ToInt32(arrayTo[2])   + (Convert.ToInt32(arrayTo[3]) + 1));
 
+            for (long i = firstIP; i < lastIP; i++)
+                ipList.Add( IPAddress.Parse( string.Join(".", BitConverter.GetBytes(i).Take(4).Reverse() ) ) );
+            return ipList;
+        }
 
+        private static List<IPAddress> IPAddressesRange(IPAddress firstIPAddress, IPAddress lastIPAddress)
+        {
+            var firstIPAddressAsBytesArray = firstIPAddress.GetAddressBytes();
+            var lastIPAddressAsBytesArray  = lastIPAddress.GetAddressBytes();
 
+            Array.Reverse( firstIPAddressAsBytesArray );
+            Array.Reverse( lastIPAddressAsBytesArray  );
 
+            var firstIPAddressAsInt = BitConverter.ToInt32( firstIPAddressAsBytesArray, 0 );
+            var lastIPAddressAsInt  = BitConverter.ToInt32( lastIPAddressAsBytesArray,  0 );
+
+            var ipAddressesInTheRange = new List<IPAddress>();
+
+            for (var i = firstIPAddressAsInt; i <= lastIPAddressAsInt; i++)
+            {
+                var bytes = BitConverter.GetBytes(i);
+                var newIp = new IPAddress( new[] { bytes[3], bytes[2], bytes[1], bytes[0] } );
+                ipAddressesInTheRange.Add( newIp );
+            }
+
+            return ipAddressesInTheRange;
+        }
 
 
 
