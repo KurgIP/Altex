@@ -68,49 +68,6 @@ namespace Altex.Controllers
             // Так как вывод результатов в XML самый полный по данным, придётся получать данные результатов сканирования через XML файл.
             // Для каждого потока указываем свой файл вывода XML результатов
 
-
-            // Получаем время в тиках
-            long time_tick = long.Parse("1718230065");
-
-            // Переводим тики во время
-            //DateTime finished_time = Convert.ToDateTime.(time_tick);
-            DateTime datetime = new DateTime(time_tick);
-
-            string ip_address ="10.0.0.10"; //"108.170.227.82"; //
-
-            var ipAddres = System.Net.IPAddress.Parse(ip_address);
-
-            try
-            {
-                //string strHostName   = "www.contoso.com";
-                // IPHostEntry hostInfo = Dns.GetHostEntry(strHostName);  //;
-                //IPHostEntry ipEntry  = Dns.GetHostEntry(strHostName);
-                //IPAddress[] addr     = ipEntry.AddressList;
-
-                //IPAddress ipadr = IPAddress.Parse(ip_address);
-                //IPHostEntry ipEntry3 = Dns.GetHostEntry(ipadr);
-
-                //string      strHostName_2 = Dns.GetHostName();
-                //IPHostEntry ipEntry2      = Dns.GetHostEntry(strHostName_2);
-
-                //IPAddress ipadr4 = IPAddress.Parse("194.187.204.194");
-                //IPHostEntry ipEntry4 = Dns.GetHostEntry(ipadr4);
-
-
-                //IPAddress ipadr5 = IPAddress.Parse("192.178.241.70");
-                //IPHostEntry ipEntry5 = Dns.GetHostEntry(ipadr4);
-
-                //{ 20.236.44.162}
-
-                //return addr[addr.Length - 1].ToString();
-            }
-            catch (PingException)
-            {
-                // Discard PingExceptions and return false;
-            }
-
-            //(string, ScanResult) result_scan = await Scan_IP_async(ip_address);
-
             return View();
         }
 

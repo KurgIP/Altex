@@ -1,6 +1,6 @@
 ﻿var _scaner = (function () {
     // Регулярное выражение для валидации IP адреса
-    var rgx_ip = new RegExp("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$", "ig");
+    var rgx_ip = new RegExp("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", "ig");
 
     function scan() {
         // Получаем значение IP старта диапазона для сканирования
@@ -42,7 +42,7 @@
 
     function set_ip_range() {
         // 
-        if (jQuery('#ip_range').is(':checked')) {
+        if (jQuery('#is_ip_range').is(':checked')) {
             // Включаем доступность поля конца диапазона IP
             jQuery("#ip_finish").prop( 'disabled', false );
         } else {
