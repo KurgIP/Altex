@@ -140,10 +140,10 @@ namespace Altex.Data.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "text", nullable: false),
+                    UserId        = table.Column<string>(type: "text", nullable: false),
                     LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: true)
+                    Name          = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Value         = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

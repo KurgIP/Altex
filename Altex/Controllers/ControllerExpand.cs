@@ -22,8 +22,8 @@ namespace Altex.Controllers
 
     public abstract class ControllerExpand : Controller
     {
-        private readonly ILogger<Controller>     _logger;
-        private readonly HttpContext             _httpContext;
+        public readonly ILogger<Controller>   _logger;
+        private readonly HttpContext          _httpContext;
 
         public ControllerExpand( ILogger<Controller> logger, IHttpContextAccessor httpContext )
         {

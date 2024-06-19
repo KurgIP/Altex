@@ -1,0 +1,127 @@
+﻿@using System.Globalization;
+@{
+    List<ScanResult> list_scanResults = (List<ScanResult>)ViewData["list_scanResults"];
+    int count = 0;
+}
+
+<div class="cntnr_block_scan_result">
+
+    <table class="tb_ip" border="0" cellpadding="0" cellspacing="0">
+        <tr class="tr_hdr_ip">
+            <td class="td_hdr" rowspan="2">IP</td>
+            <td class="td_hdr" rowspan="2">Host</td>
+            <td class="td_hdr" rowspan="2">Host type</td>
+            <td class="td_hdr" rowspan="2">MAC</td>
+            <td class="td_hdr" rowspan="2">Vendor</td>
+            <td class="td_hdr" rowspan="2">Response status</td>
+            <!-- Ports start -->
+            <td class="td_hdr" colspan="6">Ports</td>
+
+            <!-- Ports end -->
+            <td class="td_hdr prt_hdr" rowspan="2">Start scaning</td>
+            <td class="td_hdr prt_hdr" rowspan="2">Finished elapsed</td>
+            <td class="td_hdr prt_hdr" rowspan="2">runstats up</td>
+            <td class="td_hdr prt_hdr" rowspan="2">runstats down</td>
+            <td class="td_hdr prt_hdr" rowspan="2">Status reason</td>
+            <td class="td_hdr prt_hdr" rowspan="2">Status state</td>
+        </tr>
+        <tr class="tr_hdr_ip">
+
+            <!-- Ports start -->
+            <td class="td_hdr" colspan="1">Number</td>
+            <td class="td_hdr">Method</td>
+            <td class="td_hdr">Protocol</td>
+            <td class="td_hdr">Reason</td>
+            <td class="td_hdr">Service</td>
+            <td class="td_hdr">State</td>
+            <!-- Ports end -->
+
+        </tr>
+
+@foreach (ScanResult scanResult in list_scanResults)
+{
+        string class_odd = "";
+
+        if (count % 2 == 0) { class_odd = "tr_odd"; }
+
+        count++;
+
+        <tr class="tr_ip @class_odd">
+            <td class="ip_prm">
+                    @scanResult.IP
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Host
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Host_type
+            </td>
+            <td class="ip_prm">
+                    @scanResult.MAC
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Vendor
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Response_status
+            </td>
+            <td colspan="6">
+            <!-- Ports start -->
+            @if (scanResult.Ports_list.Count > 1)
+            {
+                <table class="tb_port">
+                    @foreach (Port port in scanResult.Ports_list)
+                    {
+                        <tr class="tr_port">
+
+                            <!-- Ports start -->
+                            <td class="port_prm">
+                                @port.Number
+                            </td>
+                            <td class="port_prm">
+                                @port.Method
+                            </td>
+                            <td class="port_prm">
+                                @port.Protocol
+                            </td>
+                            <td class="port_prm">
+                                @port.Reason
+                            </td>
+                            <td class="port_prm">
+                                @port.Service
+                            </td>
+                            <td class="port_prm">
+                                @port.State
+                            </td>
+                            <!-- Ports end -->
+                        </tr>
+                    }
+                </table>
+            }
+            </td>
+
+            <!-- Ports end -->
+
+            <td class="ip_prm">
+                @scanResult.Start_scaning.ToString("yyyy.MM.dd hh:mm:ss")
+            </td>
+            <td class="ip_prm">
+                @scanResult.finished_elapsed.ToString( CultureInfo.InvariantCulture )
+            </td>
+            <td class="ip_prm">
+                @scanResult.runstats_up
+            </td>
+            <td class="ip_prm">
+                @scanResult.runstats_down
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Status_reason
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Status_state
+            </td>
+        </tr>
+
+    }
+    </table>
+</div>

@@ -15,7 +15,8 @@ namespace Altex.Models
     public struct Port
     //*************************
     {
-        public int    ID;                     // Номер порта
+        public int    Id;                     // id в таблице Ports
+        public int    Number;                 // Номер порта
         public string State;                  // Состояние порта,
         public string Protocol;               // Протокол,
         public string Reason;                 //
@@ -33,7 +34,7 @@ namespace Altex.Models
         #endregion
         public override string ToString()
         {
-            return (String.Format("Port[{0}; {1}; {2}; {3}; {4}];", ID, State, Service, Protocol, Method));
+            return (String.Format("Port[{0}; {1}; {2}; {3}; {4}];", Number, State, Service, Protocol, Method));
         }
     }
 
@@ -43,6 +44,7 @@ namespace Altex.Models
     public struct ScanResult
     //*************************
     {
+        public int            Id;                  // id в таблице IPs
         public string         IP;                  // IPv4 address
         public string         MAC;                 // MAC address,
         public string         Vendor;              // Имя вендора,
@@ -58,6 +60,26 @@ namespace Altex.Models
         public string         finished_exit;       // Флаг окончания сканирования
         public string         runstats_up;         // Хост ответил
         public string         runstats_down;       // Хост не ответил
+
+        public ScanResult( string _ip, DateTime _dateTime )
+        {
+            Id                  = -1;
+            IP                  = _ip;
+            MAC                 = "";
+            Vendor              = "";
+            Host                = "";
+            Host_type           = "";
+            Start_scaning       = _dateTime;
+            Status_state        = "";
+            Status_reason       = "";
+            Ports_list          = new List<Port>();
+            Response_status     = ResponseStatus.Unknown;
+            finished_time       = _dateTime;
+            finished_elapsed    = 0;
+            finished_exit       = "";
+            runstats_up         = "";
+            runstats_down       = "";
+        }
 
         #region // Пример вывода данных о порте
         //LOCAL
@@ -123,8 +145,8 @@ namespace Altex.Models
         Success     = 0,
         Not_answer  = 1,
         Error       = 2,
-        ErrorSystem = 4,
-        Unknown     = 3
+        ErrorSystem = 3,
+        Unknown     = 4
     }
 
     public static class NMap_ResultXML_Parser
@@ -150,11 +172,7 @@ namespace Altex.Models
             string     file_text     = "";
 
             // Инициализация структуры ScanResult начальными данными.
-            ScanResult scanResult    = new ScanResult();
-            scanResult.Ports_list    = new List<Port>();
-            scanResult.finished_time = DateTime.Now;
-            scanResult.IP            = ip_for_scan;
-            scanResult.Start_scaning = DateTime.Now;
+            ScanResult scanResult    = new ScanResult( ip_for_scan, DateTime.Now );
 
             #region // Проверка входных данных
             // Проверка пустого пути
@@ -328,7 +346,7 @@ namespace Altex.Models
                 string tag_finished_txt = m_rgx_tag_finished.Groups[1].Value;
 
                 #region // Ищем значение параметра time 
-                Regex rgx_prm_finished_time   = new Regex("timestr=\"(.+?)\"", RegexOptions.None);
+                Regex rgx_prm_finished_time   = new Regex("time=\"(.+?)\"", RegexOptions.None);
                 Match m_rgx_prm_finished_time = rgx_prm_finished_time.Match( tag_finished_txt );
 
                 if ( m_rgx_prm_finished_time.Success )
@@ -347,7 +365,7 @@ namespace Altex.Models
                 }
                 #endregion
 
-                #region // Ищем значение параметра elapsed 
+                #region // Ищем значение параметра exit
                 Regex rgx_prm_finished_exit   = new Regex("exit=\"(.+?)\"", RegexOptions.None);
                 Match m_rgx_prm_finished_exit = rgx_prm_finished_exit.Match( tag_finished_txt );
 
@@ -393,11 +411,10 @@ namespace Altex.Models
 
             // Вносим полученные параметры сканирование в структуру ScanResult
 
-            // Получаем время в тиках
-            //int time_tick = int.Parse( prm_finished_time );
-            // Переводим тики во время
-            //scanResult.finished_time    = DateTime.Parse( prm_finished_time );
-
+            // Получаем время с начала эпохи 1970.01.01
+            long sec_from_epoch = long.Parse( prm_finished_time );
+            // Переводим секунды во время
+            scanResult.finished_time    = DateTime.UnixEpoch.AddSeconds(sec_from_epoch);
             scanResult.finished_elapsed = Convert.ToSingle( prm_finished_elapsed, CultureInfo.InvariantCulture );
             scanResult.finished_exit    = prm_finished_exit;
             scanResult.runstats_up      = prm_hosts_up;
@@ -804,7 +821,7 @@ namespace Altex.Models
 
 
                     Port port = new Port();
-                    port.ID        = Convert.ToInt32( prm_port_portid );
+                    port.Number    = Convert.ToInt32( prm_port_portid );
                     port.Protocol  = prm_port_protocol;
                     port.Method    = prm_service_method;
                     port.Service   = prm_service_name;

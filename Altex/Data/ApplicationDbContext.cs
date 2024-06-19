@@ -9,5 +9,6 @@ namespace Altex.Data
             : base(options)
         {
         }
+
     }
 }

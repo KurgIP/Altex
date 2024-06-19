@@ -23,6 +23,9 @@ namespace Altex
         public async static Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
+
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             using (var scope = host.Services.CreateScope()) //That is, everytime the application fires up, It would check if the default user roles are present in the database. Else, it seeds the required Roles.
             {
                 var services      = scope.ServiceProvider;

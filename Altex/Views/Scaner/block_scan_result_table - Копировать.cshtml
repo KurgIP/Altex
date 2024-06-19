@@ -1,0 +1,168 @@
+﻿@using System.Globalization;
+@{
+    List<ScanResult> list_scanResults = (List<ScanResult>)ViewData["list_scanResults"];
+}
+
+<div class="cntnr_block_scan_result">
+
+    <table class="tb_ip">
+        <tr class="tr_hdr_ip">
+            <td class="td_hdr" rowspan="2">IP</td>
+            <td class="td_hdr" rowspan="2">Host</td>
+            <td class="td_hdr" rowspan="2">Host type</td>
+            <td class="td_hdr" rowspan="2">MAC</td>
+            <td class="td_hdr" rowspan="2">Vendor</td>
+            <td class="td_hdr" rowspan="2">Response status</td>
+            <!-- Ports start -->
+            <td class="td_hdr" colspan="6">Ports</td>
+
+            <!-- Ports end -->
+            <td class="td_hdr" rowspan="2">Start scaning</td>
+            <td class="td_hdr" rowspan="2">Finished elapsed</td>
+            <td class="td_hdr" rowspan="2">runstats up</td>
+            <td class="td_hdr" rowspan="2">runstats down</td>
+            <td class="td_hdr" rowspan="2">Status reason</td>
+            <td class="td_hdr" rowspan="2">Status state</td>
+        </tr>
+        <tr class="tr_hdr_ip">
+
+            <!-- Ports start -->
+            <td class="td_hdr" colspan="1">Number</td>
+            <td class="td_hdr">Method</td>
+            <td class="td_hdr">Protocol</td>
+            <td class="td_hdr">Reason</td>
+            <td class="td_hdr">Service</td>
+            <td class="td_hdr">State</td>
+            <!-- Ports end -->
+
+        </tr>
+
+@foreach (ScanResult scanResult in list_scanResults)
+{
+        <tr class="block_port">
+            <td class="ip_prm">
+                    @scanResult.IP
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Host
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Host_type
+            </td>
+            <td class="ip_prm">
+                    @scanResult.MAC
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Vendor
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Response_status
+            </td>
+
+            <!-- Ports start -->
+            @if (scanResult.Ports_list.Count > 0)
+            {
+                Port port_1 = scanResult.Ports_list.ElementAt(0);
+                <td class="port_prm">
+                    @port_1.Number
+                </td>
+                <td class="port_prm">
+                    @port_1.Method
+                </td>
+                <td class="port_prm">
+                    @port_1.Protocol
+                </td>
+                <td class="port_prm">
+                    @port_1.Reason
+                </td>
+                <td class="port_prm">
+                    @port_1.Service
+                </td>
+                <td class="port_prm">
+                    @port_1.State
+                </td>
+            }
+            else
+            {
+                <td class="port_prm"></td>
+                <td class="port_prm"></td>
+                <td class="port_prm"></td>
+                <td class="port_prm"></td>
+                <td class="port_prm"></td>
+                <td class="port_prm"></td>
+            }
+            <!-- Ports end -->
+
+            <td class="ip_prm">
+                @scanResult.Start_scaning.ToString("yyyy.MM.dd hh:mm:ss")
+            </td>
+            <td class="ip_prm">
+                @scanResult.finished_elapsed.ToString( CultureInfo.InvariantCulture )
+            </td>
+            <td class="ip_prm">
+                @scanResult.runstats_up
+            </td>
+            <td class="ip_prm">
+                @scanResult.runstats_down
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Status_reason
+            </td>
+            <td class="ip_prm">
+                    @scanResult.Status_state
+            </td>
+        </tr>
+
+        @if (scanResult.Ports_list.Count > 1)
+        {
+            bool break_first_row = true;
+            @foreach (Port port in scanResult.Ports_list)
+            {
+                if(break_first_row)
+                {
+                    break_first_row = false;
+                    continue;
+                }
+
+                <tr class="block_port">
+
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+
+                        <!-- Ports start -->
+                    <td class="port_prm">
+                        @port.Number
+                    </td>
+                    <td class="port_prm">
+                        @port.Method
+                    </td>
+                    <td class="port_prm">
+                        @port.Protocol
+                    </td>
+                    <td class="port_prm">
+                        @port.Reason
+                    </td>
+                    <td class="port_prm">
+                        @port.Service
+                    </td>
+                    <td class="port_prm">
+                        @port.State
+                    </td>
+                    <!-- Ports end -->
+
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                    <td class="ip_prm"></td>
+                </tr>
+            }
+        }
+    }
+    </table>
+</div>

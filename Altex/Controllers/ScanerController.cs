@@ -19,6 +19,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Net.Http;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Altex.Util;
+using Altex.Utils;
 
 namespace Altex.Controllers
 {
@@ -64,9 +65,6 @@ namespace Altex.Controllers
         // GET: ScanerController      
         public ActionResult Index()
         {
-            // Перехват потока вывода результатов сканирования nmap.exe не перехватывает поток в XML файл, а только стандартный поток в консоль.
-            // Так как вывод результатов в XML самый полный по данным, придётся получать данные результатов сканирования через XML файл.
-            // Для каждого потока указываем свой файл вывода XML результатов
 
             return View();
         }
@@ -106,7 +104,7 @@ namespace Altex.Controllers
             // Переводим входные данные в диапазон IP
             IPAddress ip_from = IPAddress.Parse( ip_address_start  );
             IPAddress ip_to   = IPAddress.Parse( ip_address_finish );
-
+             
             // Получаем список IP адресов диапазона
             List<IPAddress> list_ipAddres_range  = GetIPList( ip_from, ip_to);
 
@@ -119,14 +117,20 @@ namespace Altex.Controllers
                 string              ip_address_text = ip_address.ToString();
                 (string, ScanResult) result_scan    = await Scan_IP_async( ip_address_text );
 
+                ScanResult scanResult = result_scan.Item2;
                 // Сохраняем в список полученный результат
-                list_scanResults.Add( result_scan.Item2 );
+
+                list_scanResults.Add(scanResult);
+
+                string error = await ScanUtils.save_ScanResult_async( scanResult );
             }
 
             ViewData["list_scanResults"] = list_scanResults;
 
-            return PartialView("block_scan_result");
+            return PartialView("block_scan_result_table");
         }
+        
+
         private static async Task<(string, ScanResult)> Scan_IP_async( string ip_for_scan )
         {
             string     error      = String.Empty;
@@ -203,7 +207,6 @@ namespace Altex.Controllers
             return (error, scanResult);
         }
 
-
         private List<IPAddress> GetIPList(IPAddress ipFrom, IPAddress ipTo)
         {
             List<IPAddress> ipList    = new List<IPAddress>();
@@ -242,6 +245,14 @@ namespace Altex.Controllers
         }
 
 
+        // GET: ScanerController/Details/5
+        public ActionResult List_result_scaned()
+        {
+
+
+
+            return View();
+        }
 
 
 

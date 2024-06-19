@@ -1,4 +1,5 @@
-﻿@{
+﻿@using System.Globalization;
+@{
     List<ScanResult> list_scanResults = (List<ScanResult>)ViewData["list_scanResults"];
 }
 
@@ -17,6 +18,7 @@
                 <td class="td_hdr">Vendor</td>
                 <td class="td_hdr">Response_status</td>
                 <td class="td_hdr">Start_scaning</td>
+                <td class="td_hdr">Finished_elapsed</td>
                 <td class="td_hdr">runstats_up</td>
                 <td class="td_hdr">runstats_down</td>
                 <td class="td_hdr">Status_reason</td>
@@ -45,6 +47,9 @@
                     @scanResult.Start_scaning.ToString("yyyy.MM.dd hh:mm:ss");
                 </td>
                 <td class="ip_prm">
+                    @scanResult.finished_elapsed.ToString( CultureInfo.InvariantCulture );
+                </td>
+                <td class="ip_prm">
                     @scanResult.runstats_up
                 </td>
                 <td class="ip_prm">
@@ -65,7 +70,7 @@
         <div class="block_ports">
             <table class="tb_list_ports">
                 <tr class="tr_hdr_port">
-                    <td class="td_hdr">Port ID </td>
+                    <td class="td_hdr">Number </td>
                     <td class="td_hdr">Method</td>
                     <td class="td_hdr">Protocol</td>
                     <td class="td_hdr">Reason</td>
@@ -76,7 +81,7 @@
                 {
                     <tr class="block_port">
                         <td class="port_prm">
-                            @port.ID
+                            @port.Number
                         </td>
                         <td class="port_prm">
                             @port.Method
