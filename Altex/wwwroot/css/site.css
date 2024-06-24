@@ -24,7 +24,7 @@ body { margin-bottom: 60px;}
 .tb_ip {width: 100%;}
 .ip_prm { font-size:10px; padding: 4px 2px; vertical-align: top;}
 .tr_hdr_ip {border:1px solid #91afa8; background-color:#e3fcf5; border-width: 1px 0px;}
-.td_hdr{font-size:10px; font-weight:bold; color: #4b6f71; padding: 1px 7px; font-family: PT_Sans_Narrow;}
+.td_hdr{font-size:10px; font-weight:bold; color: #4b6f71; padding: 1px 7px; font-family: PT_Sans_Narrow; position: relative;}
 
 .block_ports {width:100%; padding-left:50px;}
 .tb_list_ports{ }
@@ -39,7 +39,19 @@ body { margin-bottom: 60px;}
 .tr_port {}
 
 
- 
+/* *******************************************************************  Paging  ******************************************************************* */
+#tb_pagin { margin:10px auto; color: #5f7a7a; font-size:12px; user-select: none; border-collapse: separate;}
+#sl_paginat_nmb_pg, .td_pagin_go, .td_pagin_prev, .td_pagin_num, .td_pagin_next, .td_pagin_numbpg {background-color:#ddecee; border: solid 1px #abcfcf; color: #768b7c; padding:3px 5px; }
+.dv_pagin_go {}
+#sl_paginat_nmb_pg {border-width:0px;}
+.pg_sl { background-color:#ebe3b6; border: solid 1px #cebb53; color:#7d6829; }
+
+ /* *******************************************************************  Collaps column  ******************************************************************* */
+.dv_clps{ position:absolute; top:-3px; right:0px;}
+.fa_clps{ color: #6493d0; font-size:10px; line-height:0px;}
+.clps_sl, .clmfltr_sl{ background-color:#ffe50c; color: #1067a6; font-size:14px; line-height:0px; cursor:pointer; }
+
+
 @font-face {
 font-family: "PT_Sans_Narrow";
 src: url("../fonts/PT_Sans-Narrow-Web-Regular.ttf") format("truetype");

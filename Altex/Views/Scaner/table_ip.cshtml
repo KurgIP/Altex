@@ -1,0 +1,150 @@
+﻿@using System.Globalization;
+@using Altex.Utils;
+@{
+    Dictionary<string, Dictionary<string, string>> dct_fields_properties = (Dictionary<string, Dictionary<string, string>>)ViewData["dct_fields_properties"];
+    Dictionary<int, ScanResult>                    dct_ScanResult        = (Dictionary<int, ScanResult>)ViewData["dct_ScanResult"];
+    List<string>                                   list_columns_collaps  = (List<string>)ViewData["list_columns_collaps"];
+    Dictionary<string, FilterByColumn>             dct_filters_columns   = (Dictionary<string, FilterByColumn>)ViewData["dct_filters_columns"];
+    int count = 0;
+}
+
+<table id="tb_list" class="tb_ip" border="0" cellpadding="0" cellspacing="0" tp="IPs">
+    <tr class="tr_hdr_ip">
+        <!-- <td class="td_hdr" rowspan="2">IP</td> -->
+        @{ string style_clps_td = list_columns_collaps.Contains("IP") ? "hd": ""; }
+
+        <td class="td_hdr @style_clps_td" rowspan="2" clps="0">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'IP')">IP</div>
+            <div id="dv_flt_IP">
+                @if (dct_filters_columns.ContainsKey("IP"))
+                {
+                    @GeneratorHTML.Generate_filter_column( dct_filters_columns["IP"], ref dct_fields_properties );
+                }
+            </div>
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(0,'IP')"></i>
+            </div>
+        </td>
+        <td class="td_hdr" rowspan="2" clps="1">Host</td>
+        <td class="td_hdr" rowspan="2" clps="2">Host type</td>
+        <td class="td_hdr" rowspan="2" clps="3">MAC</td>
+        <td class="td_hdr" rowspan="2" clps="4">Vendor</td>
+        <td class="td_hdr" rowspan="2" clps="5">Response status</td>
+        <!-- Ports start -->
+        <td class="td_hdr" colspan="6" clps="6">Ports</td>
+
+        <!-- Ports end -->
+        <td class="td_hdr prt_hdr" rowspan="2" clps="7">Start scaning</td>
+        <td class="td_hdr prt_hdr" rowspan="2" clps="8">Finished elapsed</td>
+        <td class="td_hdr prt_hdr" rowspan="2" clps="9">runstats up</td>
+        <td class="td_hdr prt_hdr" rowspan="2" clps="10">runstats down</td>
+        <td class="td_hdr prt_hdr" rowspan="2" clps="11">Status reason</td>
+        <td class="td_hdr prt_hdr" rowspan="2" clps="12">Status state</td>
+    </tr>
+    <tr class="tr_hdr_ip">
+
+        <!-- Ports start -->
+        <td class="td_hdr" clps="6">Number</td>
+        <td class="td_hdr" clps="6">Method</td>
+        <td class="td_hdr" clps="6">Protocol</td>
+        <td class="td_hdr" clps="6">Reason</td>
+        <td class="td_hdr" clps="6">Service</td>
+        <td class="td_hdr" clps="6">State</td>
+        <!-- Ports end -->
+
+    </tr>
+
+    @foreach ( KeyValuePair<int,ScanResult> kv in dct_ScanResult )
+    {
+        ScanResult scanResult = kv.Value;
+
+        string class_odd = "";
+
+        if (count % 2 == 0) { class_odd = "tr_odd"; }
+
+        count++;
+
+        <tr class="tr_ip @class_odd">
+            <td class="ip_prm" clps="0">
+                @scanResult.IP
+            </td>
+            <td class="ip_prm" clps="1">
+                @scanResult.Host
+            </td>
+            <td class="ip_prm" clps="2">
+                @scanResult.Host_type
+            </td>
+            <td class="ip_prm" clps="3">
+                @scanResult.MAC
+            </td>
+            <td class="ip_prm" clps="4">
+                @scanResult.Vendor
+            </td>
+            <td class="ip_prm" clps="5">
+                @scanResult.Response_status
+            </td>
+            <td colspan="6" clps="6">
+                <!-- Ports start -->
+                @if (scanResult.Ports_list.Count > 1)
+                {
+                    <table class="tb_port">
+                        @foreach (Port port in scanResult.Ports_list)
+                        {
+                            @if (port.Number == 0) continue;
+                            <tr class="tr_port">
+
+                                <!-- Ports start -->
+                                <td class="port_prm">
+                                    @port.Number
+                                </td>
+                                <td class="port_prm">
+                                    @port.Method
+                                </td>
+                                <td class="port_prm">
+                                    @port.Protocol
+                                </td>
+                                <td class="port_prm">
+                                    @port.Reason
+                                </td>
+                                <td class="port_prm">
+                                    @port.Service
+                                </td>
+                                <td class="port_prm">
+                                    @port.State
+                                </td>
+                                <!-- Ports end -->
+                            </tr>
+                        }
+                    </table>
+                }
+            </td>
+
+            <!-- Ports end -->
+
+            <td class="ip_prm" clps="7">
+                @scanResult.Start_scaning.ToString("yyyy.MM.dd hh:mm:ss")
+            </td>
+            <td class="ip_prm" clps="8">
+                @scanResult.finished_elapsed.ToString( CultureInfo.InvariantCulture )
+            </td>
+            <td class="ip_prm" clps="9">
+                @scanResult.runstats_up
+            </td>
+            <td class="ip_prm" clps="10">
+                @scanResult.runstats_down
+            </td>
+            <td class="ip_prm" clps="11">
+                @scanResult.Status_reason
+            </td>
+            <td class="ip_prm" clps="12">
+                @scanResult.Status_state
+            </td>
+        </tr>
+
+    }
+
+    <tr id="tr_paginat">
+        @Pagination.Render_Pagination( (Paging)ViewData["paging"], "_scaner" )
+    </tr>
+</table>
+

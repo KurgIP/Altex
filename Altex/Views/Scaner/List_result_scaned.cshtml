@@ -1,0 +1,16 @@
+﻿@using System.Globalization;
+@using Altex.Utils;
+@{
+    ViewData["Title"] = "List scaned IP";
+    Dictionary<int, ScanResult> dct_ScanResult = (Dictionary<int, ScanResult>)ViewData["dct_ScanResult"];
+    int count = 0;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Список просканированных IP</h1>
+
+    <div id="dv_ip_scan_result" class="cntnr_block_scan_result">
+        <partial name="table_ip" />        
+    </div>   
+
+</div>

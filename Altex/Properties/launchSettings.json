@@ -3,7 +3,7 @@
     "Altex": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "https://localhost:7096/Scaner",
+      "launchUrl": "https://localhost:7096/Scaner/List_result_scaned",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

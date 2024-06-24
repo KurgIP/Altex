@@ -58,8 +58,9 @@ namespace Altex.Data.Migrations
                         column:          x => x.ip_id,
                         principalTable:  "IPs",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete:        ReferentialAction.Cascade);
                 });
+
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

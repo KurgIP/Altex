@@ -81,6 +81,28 @@ namespace Altex.Models
             runstats_down       = "";
         }
 
+        public ScanResult()
+        {
+            DateTime _dateTime = DateTime.Now;
+
+            Id               = -1;
+            IP               = "";
+            MAC              = "";
+            Vendor           = "";
+            Host             = "";
+            Host_type        = "";
+            Start_scaning    = _dateTime;
+            Status_state     = "";
+            Status_reason    = "";
+            Ports_list       = new List<Port>();
+            Response_status  = ResponseStatus.Unknown;
+            finished_time    = _dateTime;
+            finished_elapsed = -1;
+            finished_exit    = "";
+            runstats_up      = "";
+            runstats_down    = "";
+        }
+
         #region // Пример вывода данных о порте
         //LOCAL
         // <hosthint>
@@ -157,7 +179,6 @@ namespace Altex.Models
         /// </summary>
         /// <param name="path_file_xml">Path to XML file</param>
         /// <returns>Кортеж( string, ScanResult ) Описание ошибки, Результат сканирования в структуре ScanResult</returns>
-
         public static async Task<(string, ScanResult)> ParsingFileXML_async( string path_file_xml, string ip_for_scan )
         {
             // Файл с данными это результат сканирования.

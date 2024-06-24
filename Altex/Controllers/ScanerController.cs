@@ -23,7 +23,7 @@ using Altex.Utils;
 
 namespace Altex.Controllers
 {
-    //[Authorize(Roles = "SuperAdmin,Admin")]
+    [Authorize(Roles = "Admin" )]
     public class ScanerController : ControllerExpand
     {
 
@@ -37,7 +37,7 @@ namespace Altex.Controllers
         private readonly ILogger<Controller>          _logger;
         //private readonly HttpContext                  _context;
         private readonly IHttpContextAccessor         _httpContext;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<IdentityUser>     _userManager;
 
         private static string  _nmap_programm_path      = "";
         private static string  _nmap_result_folder      = "";
@@ -45,7 +45,7 @@ namespace Altex.Controllers
         private static string  _contentRootPath         = "";
         private static string  _nmap_result_folder_path = "";
         
-        public ScanerController( ILogger<Controller> logger, IConfiguration configuration, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContext) : base(logger, httpContext)//base( logger, context )HttpContext context, 
+        public ScanerController( ILogger<Controller> logger, IConfiguration configuration, UserManager<IdentityUser> userManager, IHttpContextAccessor httpContext) : base(logger, httpContext)//base( logger, context )HttpContext context, 
         {
             _userManager = userManager;
             _logger      = logger;
@@ -246,10 +246,38 @@ namespace Altex.Controllers
 
 
         // GET: ScanerController/Details/5
-        public ActionResult List_result_scaned()
+        public async Task<ActionResult> List_result_scaned()
         {
+            // Текущий юзер и его роли
+            var           user            = await _userManager.GetUserAsync( Startup._httpContextAccessor.HttpContext.User );
+            IList<string> list_roles_user = await _userManager.GetRolesAsync( user );
+
+            //string ss =  ResponseStatus.Not_answer.ToString();
+            //string Response_status_txt = "Not_answer";
+            //ResponseStatus aa = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), Response_status_txt, true);
 
 
+            //Грузим свойства полей для колонок по их place
+            Dictionary<string, Dictionary<string, string>>             dct_fields_properties        = await FieldsManageUtils.Get_dct_fields_properties_by_place_async("IPs", list_roles_user);
+
+            // Получаем кортеж: Фильтр по колонке,  список скрытых колонок, текущая разбивка по страницам
+            (Dictionary<string, FilterByColumn>, List<string>, Paging) tulip_user_settings_of_place = await UserUtils.Get_user_settings_of_place_async( PlacesFiltersCollaps.IPs, dct_fields_properties);
+
+            Dictionary<string, FilterByColumn> dct_filters_columns = tulip_user_settings_of_place.Item1;
+
+            Paging paging        = tulip_user_settings_of_place.Item3;
+            // Задаём условие  full_quantity = -1, что бы произвести подсчёт сколько всего строк есть по этому фильтру колонок
+            paging.full_quantity = -1;
+
+            // Получаем страницу результатов сканирования. Кортеж(error, dct_ScanResult )
+            (string, Dictionary<int, ScanResult>, Paging) result = await ScanUtils.load_ScanResults_async( dct_filters_columns, paging );
+
+            ViewData["paging"]                = result.Item3;
+            ViewData["dct_ScanResult"]        = result.Item2;
+            ViewData["dct_fields_properties"] = dct_fields_properties;
+            ViewData["list_columns_collaps"]  = tulip_user_settings_of_place.Item2;
+            ViewData["dct_filters_columns"]   = dct_filters_columns;
+            ViewData["is_editable_row"]       = false;
 
             return View();
         }
@@ -325,5 +353,289 @@ namespace Altex.Controllers
                 return View();
             }
         }
+
+
+
+        #region //=========================================== Pagination, Collaps =============================
+        [HttpPost]
+        public async Task<IActionResult> get_list_by_pagination()
+        {
+            string error     = String.Empty;
+            string log_place = "ScanerController.get_list_by_pagination";
+
+            #region //----------------------------------  Входные данные
+
+            int curr_page = -1;
+            // Проверяем наличие параметра номер страницы num_page
+            if (check_input_int(ref curr_page, Request.Form["currpg"], log_place + ", param:currpg", true)) return new EmptyResult();
+
+            int num_on_page = -1;
+            // Проверяем наличие параметра сколько строк на странице
+            if (check_input_int(ref num_on_page, Request.Form["numonpg"], log_place + ", param:numonpg", true)) return new EmptyResult();
+
+            // Текущий юзер и его роли
+            var           user            = await _userManager.GetUserAsync( Startup._httpContextAccessor.HttpContext.User );
+            IList<string> list_roles_user = await _userManager.GetRolesAsync( user );
+            #endregion
+
+
+            //Грузим свойства полей для колонок по их place
+            Dictionary<string, Dictionary<string, string>>             dct_fields_properties        = await FieldsManageUtils.Get_dct_fields_properties_by_place_async( "IPs", list_roles_user);
+
+            // Получаем кортеж: Фильтр по колонке,  список скрытых колонок, текущая разбивка по страницам
+            (Dictionary<string, FilterByColumn>, List<string>, Paging) tulip_user_settings_of_place = await UserUtils.Get_user_settings_of_place_async( PlacesFiltersCollaps.IPs, dct_fields_properties);
+
+            Dictionary<string, FilterByColumn> dct_filters_columns = tulip_user_settings_of_place.Item1;
+     
+            // Задаём параметры вывода страниц
+            Paging paging       = tulip_user_settings_of_place.Item3;
+            paging.numb_on_page = num_on_page;
+            // Если изменение пришло из смены количества строк на странице,
+            // Надо пересчитать исходя из этого текущую страницу так, что бы первая строка в старых настройках оставалась на новой странице
+            if ( curr_page == -111 )
+            {
+                int count_rows = paging.curr_page * paging.numb_on_page;
+                curr_page      = count_rows / paging.numb_on_page;
+            }
+            paging.curr_page = curr_page;
+
+
+
+            // Получаем страницу результатов сканирования. Кортеж(error, dct_ScanResult )
+            (string, Dictionary<int, ScanResult>, Paging) result = await ScanUtils.load_ScanResults_async(dct_filters_columns, paging);
+
+            // Обрабатываем ошибки
+            if ( !String.IsNullOrWhiteSpace(result.Item1) )
+            {
+                return Content( convert_error_message_to_js_answer_with_errfield( result.Item1 ) );
+            }
+            paging = result.Item3;
+
+            #region // Сохраняем в базу пагинацию
+            error = await UserUtils.Pagination_save_async( PlacesFiltersCollaps.IPs, paging );
+            if (!String.IsNullOrWhiteSpace(error))
+            {
+                Startup._httpContextAccessor.HttpContext.Response.StatusCode = (int)System.Net.HttpStatusCode.TemporaryRedirect; //307
+                return Content(GeneratorHTML.GenerateMessageErrorJQuery("Ошибка при сохранении пагинации."));
+            }
+            #endregion
+
+            ViewData["paging"]                = paging;
+            ViewData["dct_ScanResult"]        = result.Item2;
+            ViewData["dct_fields_properties"] = dct_fields_properties;
+            ViewData["list_columns_collaps"]  = tulip_user_settings_of_place.Item2;
+            ViewData["dct_filters_columns"]   = dct_filters_columns;
+            ViewData["is_editable_row"]       = false;
+
+            return PartialView("table_ip");
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> aj_set_collaps_columnn()
+        {
+            string error     = String.Empty;
+            string log_place = "ScanerController.aj_set_collaps_columnn";
+
+            #region //----------------------------------  Входные данные
+
+            // Текущий юзер и его роли
+            var user = await _userManager.GetUserAsync(Startup._httpContextAccessor.HttpContext.User);
+            IList<string> list_roles_user = await _userManager.GetRolesAsync(user);
+
+
+            // Проверяем наличие параметра тип данных "IPs"
+            if (Commons.check_param(Request.Form["tp"], log_place, "Need params tp is Null", "Hack", true)) return new EmptyResult();
+            string type_data = Commons.Sanitize( Request.Form["tp"] );
+
+            // Проверяем наличие параметра тип данных  по названию ( "workplaces" или другие)
+            object enum_type = (object)PlacesFiltersCollaps.IPs;
+            if ( !PlacesFiltersCollaps.TryParse( typeof(PlacesFiltersCollaps), type_data, true, out enum_type ) )
+            {
+                // Ошибка типа данных
+                return new EmptyResult();
+            }
+
+            // Проверяем наличие параметра имя скрытой колонки n
+            if (Commons.check_param(Request.Form["n"], log_place, "Need params n is Null", "Hack", true)) return new EmptyResult();
+            string collaps_name_column = Commons.Sanitize(Request.Form["n"]);
+
+            #endregion
+
+            //Грузим свойства полей для колонок по их place
+            Dictionary<string, Dictionary<string, string>>             dct_fields_properties        = await FieldsManageUtils.Get_dct_fields_properties_by_place_async( "IPs", list_roles_user );
+            // Получаем кортеж: Фильтр по колонке,  список скрытых колонок, текущая разбивка по страницам
+            (Dictionary<string, FilterByColumn>, List<string>, Paging) tulip_user_settings_of_place = await UserUtils.Get_user_settings_of_place_async( PlacesFiltersCollaps.IPs, dct_fields_properties );
+
+            // Используется ли такое имя
+            if (!dct_fields_properties.ContainsKey(collaps_name_column))
+            {
+                // Ошибка типа данных
+                return new EmptyResult();
+            }
+
+            List<string> list_collaps_columns = tulip_user_settings_of_place.Item2;
+
+            if ( !list_collaps_columns.Contains(collaps_name_column) )
+                list_collaps_columns.Add(collaps_name_column);
+
+            #region // Сохраняем в базу скрытые поля
+            error = await UserUtils.Collaps_columns_save(PlacesFiltersCollaps.IPs, list_collaps_columns);
+            if (!String.IsNullOrWhiteSpace(error))
+            {
+                Startup._httpContextAccessor.HttpContext.Response.StatusCode = (int)System.Net.HttpStatusCode.TemporaryRedirect; //307
+                return Content(GeneratorHTML.GenerateMessageErrorJQuery("Ошибка при сохранении списка скрытых колонок."));
+            }
+            #endregion
+
+            // Сообщение пользователю
+            string js = GeneratorHTML.GenerateMessageJS2HTML("Колонка <b>" + collaps_name_column.ToUpper() + "</b> скрыта");
+
+            return Content(js, "text/javascript");
+        }
+
+        //[HttpPost]
+        //public async Task<IActionResult> aj_set_workplaces_collaps_columns_panel_show()
+        //{
+        //    string error = String.Empty;
+        //    string log_place = "WorkplaceManageController.aj_set_workplaces_collaps_columnn";
+
+        //    #region //----------------------------------  Входные данные
+
+        //    int id_organization = -1;
+        //    // Проверяем наличие параметра sp (id проекта ) и соответствие его типу int
+        //    if (check_input_int(ref id_organization, Request.Form["orgnz"], log_place + ", param:orgnz", true)) return new EmptyResult();
+
+        //    int id_structure = -1;
+        //    // Проверяем наличие параметра strct ( id структуры проекта ) и соответствие его типу int
+        //    if (check_input_int(ref id_structure, Request.Form["strct"], log_place + ", param:strct", true)) return new EmptyResult();
+
+        //    // Текущий юзер и его роли
+        //    var user = await _userManager.GetUserAsync(Startup._httpContextAccessor.HttpContext.User);
+        //    IList<string> list_roles_user = await _userManager.GetRolesAsync(user);
+
+        //    // Получаем из базы список организаций и их структур текущего юзера
+        //    // Dictionary<ID_ORGANIZATION:int, ID_STRUCTURE:List<int>>
+        //    Dictionary<int, NameIdList> dct_user_organizations = await WorkplaceUtil.Get_dct_user_organizations_async(user.Id);
+
+        //    // Проверка правильности id_organization
+        //    if (Commons.check_contains(dct_user_organizations.ContainsKey(id_organization), log_place, "dct_user_organizations", id_organization.ToString(), true)) { return new EmptyResult(); }
+
+        //    // Проверка правильности id_structure
+        //    if (Commons.check_contains(dct_user_organizations[id_organization].list.ContainsKey(id_structure), log_place, "dct_user_organizations_structure", id_structure.ToString(), true)) { return new EmptyResult(); }
+
+
+        //    // Проверяем наличие параметра тип данных "workplaces"
+        //    if (Commons.check_param(Request.Form["tp"], log_place, "Need params tp is Null", "Hack", true)) return new EmptyResult();
+        //    string type_data = Commons.Sanitize(Request.Form["tp"]);
+
+        //    // Проверяем наличие параметра тип данных  по названию ( "workplaces" или другие)
+        //    object enum_type_workplace = (object)PlacesFiltersCollaps.organization;
+        //    if (!PlacesFiltersCollaps.TryParse(typeof(PlacesFiltersCollaps), type_data, true, out enum_type_workplace))
+        //    {
+        //        // Ошибка типа данных
+        //        return new EmptyResult();
+        //    }
+
+        //    #endregion
+
+        //    //Грузим свойства полей для колонок по их place
+        //    Dictionary<string, Dictionary<string, string>> dct_fields_properties = await FieldsManageUtils.Get_dct_fields_properties_by_place_async("workplace", list_roles_user);
+        //    // Получаем кортеж: Фильтр по колонке,  список скрытых колонок, текущая разбивка по страницам
+        //    (Dictionary<string, FilterByColumn>, List<string>, Paging) tulip_user_settings_of_place = UserUtil.Get_user_settings_of_place(PlacesFiltersCollaps.workplace, ref dct_fields_properties);
+
+        //    ViewData["dct_fields_properties"] = dct_fields_properties;
+        //    ViewData["list_columns_collaps"] = tulip_user_settings_of_place.Item2;
+
+        //    return PartialView("collaps_columns_panel");
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> aj_set_workplaces_collaps_columns_panel_close()
+        //{
+        //    string error = String.Empty;
+        //    string log_place = "WorkplaceManageController.aj_set_workplaces_collaps_columns_panel_close";
+
+        //    #region //----------------------------------  Входные данные
+
+        //    int id_organization = -1;
+        //    // Проверяем наличие параметра sp (id проекта ) и соответствие его типу int
+        //    if (check_input_int(ref id_organization, Request.Form["orgnz"], log_place + ", param:orgnz", true)) return new EmptyResult();
+
+        //    int id_structure = -1;
+        //    // Проверяем наличие параметра strct ( id структуры проекта ) и соответствие его типу int
+        //    if (check_input_int(ref id_structure, Request.Form["strct"], log_place + ", param:strct", true)) return new EmptyResult();
+
+        //    // Текущий юзер и его роли
+        //    var user = await _userManager.GetUserAsync(Startup._httpContextAccessor.HttpContext.User);
+        //    IList<string> list_roles_user = await _userManager.GetRolesAsync(user);
+
+        //    // Получаем из базы список организаций и их структур текущего юзера
+        //    // Dictionary<ID_ORGANIZATION:int, ID_STRUCTURE:List<int>>
+        //    Dictionary<int, NameIdList> dct_user_organizations = await WorkplaceUtil.Get_dct_user_organizations_async(user.Id);
+
+        //    // Проверка правильности id_organization
+        //    if (Commons.check_contains(dct_user_organizations.ContainsKey(id_organization), log_place, "dct_user_organizations", id_organization.ToString(), true)) { return new EmptyResult(); }
+
+        //    // Проверка правильности id_structure
+        //    if (Commons.check_contains(dct_user_organizations[id_organization].list.ContainsKey(id_structure), log_place, "dct_user_organizations_structure", id_structure.ToString(), true)) { return new EmptyResult(); }
+
+
+        //    // Проверяем наличие параметра тип данных "workplaces"
+        //    if (Commons.check_param(Request.Form["tp"], log_place, "Need params tp is Null", "Hack", true)) return new EmptyResult();
+        //    string type_data = Commons.Sanitize(Request.Form["tp"]);
+
+        //    // Проверяем наличие параметра тип данных  по названию ( "workplaces" или другие)
+        //    object enum_type_workplace = (object)PlacesFiltersCollaps.organization;
+        //    if (!PlacesFiltersCollaps.TryParse(typeof(PlacesFiltersCollaps), type_data, true, out enum_type_workplace))
+        //    {
+        //        // Ошибка типа данных
+        //        return new EmptyResult();
+        //    }
+
+        //    // Проверяем наличие параметра список имён скрытых колонок 
+        //    if (Commons.check_param(Request.Form["clmhd"], log_place, "Need params clmhd is Null", "Hack", true)) return new EmptyResult();
+        //    string list_column_name_hide_txt = Commons.Sanitize(Request.Form["clmhd"]);
+        //    List<string> list_column_name_hide = list_column_name_hide_txt.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        //    #endregion
+
+        //    //Грузим свойства полей для колонок по их place
+        //    Dictionary<string, Dictionary<string, string>> dct_fields_properties = await FieldsManageUtils.Get_dct_fields_properties_by_place_async("workplace", list_roles_user);
+        //    // Получаем кортеж: Фильтр по колонке,  список скрытых колонок, текущая разбивка по страницам
+        //    //(Dictionary<string, FilterByColumn>, List<string>, Paging) tulip_user_settings_of_place = UserUtil.Get_user_settings_of_place(PlacesFiltersCollaps.workplace, ref dct_fields_properties);
+
+        //    // Проверяем правильность имен
+        //    List<string> list_keys = dct_fields_properties.Keys.ToList();
+        //    List<string> list_save = new List<string>();
+        //    foreach (string column_name in list_column_name_hide)
+        //    {
+        //        if (list_keys.Contains(column_name))
+        //        {
+        //            // Сохраняем только существующие поля
+        //            list_save.Add(column_name);
+        //        }
+        //    }
+
+        //    #region // Сохраняем в базу скрытые поля
+        //    error = await UserUtil.Collaps_columns_save(PlacesFiltersCollaps.workplace, list_save);
+        //    if (!String.IsNullOrWhiteSpace(error))
+        //    {
+        //        Startup._httpContextAccessor.HttpContext.Response.StatusCode = (int)System.Net.HttpStatusCode.TemporaryRedirect; //307
+        //        return Content(GeneratorHTML.GenerateMessageErrorJQuery("Ошибка при сохранении списка скрытых колонок."));
+        //    }
+        //    #endregion
+
+        //    // Сообщение пользователю
+        //    string js = GeneratorHTML.GenerateMessageJQuery("Сохранение прошло удачно");
+
+        //    return Content(js, "text/javascript");
+        //}
+        //#endregion
+
+
+        #endregion
+
+
     }
 }

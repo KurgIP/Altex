@@ -25,26 +25,27 @@ namespace Altex
             var host = CreateHostBuilder(args).Build();
 
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            //user:   Tester
+            //secret: Tester_1
+            //using (var scope = host.Services.CreateScope()) //That is, everytime the application fires up, It would check if the default user roles are present in the database. Else, it seeds the required Roles.
+            //{
+            //    var services      = scope.ServiceProvider;
+            //    var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+            //    try
+            //    {
+            //        var context = services.GetRequiredService<ApplicationDbContext>();
+            //        // var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+            //        // var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            //        // await ContextSeed.SeedRolesAsync(userManager, roleManager);
+            //        // await ContextSeed.SeedSuperAdminAsync(userManager, roleManager); //Seeds SuperAdmin if it is not defined.
 
-            using (var scope = host.Services.CreateScope()) //That is, everytime the application fires up, It would check if the default user roles are present in the database. Else, it seeds the required Roles.
-            {
-                var services      = scope.ServiceProvider;
-                var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-                try
-                {
-                    var context = services.GetRequiredService<ApplicationDbContext>();
-                    // var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-                    // var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-                    // await ContextSeed.SeedRolesAsync(userManager, roleManager);
-                    // await ContextSeed.SeedSuperAdminAsync(userManager, roleManager); //Seeds SuperAdmin if it is not defined.
-
-                }
-                catch (Exception ex)
-                {
-                    var logger = loggerFactory.CreateLogger<Program>();
-                    logger.LogError(ex, "An error occurred seeding the DB.");
-                }
-            }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        var logger = loggerFactory.CreateLogger<Program>();
+            //        logger.LogError(ex, "An error occurred seeding the DB.");
+            //    }
+            //}
             host.Run();
         }
 
