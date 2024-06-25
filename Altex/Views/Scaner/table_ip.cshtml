@@ -1,4 +1,5 @@
 ﻿@using System.Globalization;
+@using Altex.Util;
 @using Altex.Utils;
 @{
     Dictionary<string, Dictionary<string, string>> dct_fields_properties = (Dictionary<string, Dictionary<string, string>>)ViewData["dct_fields_properties"];
@@ -6,50 +7,126 @@
     List<string>                                   list_columns_collaps  = (List<string>)ViewData["list_columns_collaps"];
     Dictionary<string, FilterByColumn>             dct_filters_columns   = (Dictionary<string, FilterByColumn>)ViewData["dct_filters_columns"];
     int count = 0;
+
+    string IP_clps               = @Commons.class_collaps(@list_columns_collaps, "IP");
+    string Host_clps             = @Commons.class_collaps(@list_columns_collaps, "Host");
+    string Host_type_clps        = @Commons.class_collaps(@list_columns_collaps, "Host_type");
+    string MAC_clps              = @Commons.class_collaps(@list_columns_collaps, "MAC");
+    string Vendor_clps           = @Commons.class_collaps(@list_columns_collaps, "Vendor");
+    string Response_status_clps  = @Commons.class_collaps(@list_columns_collaps, "Response_status");
+    string Ports_clps            = @Commons.class_collaps(@list_columns_collaps, "Ports");
+    string Start_scaning_clps    = @Commons.class_collaps(@list_columns_collaps, "Start_scaning");
+    string Finished_elapsed_clps = @Commons.class_collaps(@list_columns_collaps, "Finished_elapsed");
+    string runstats_up_clps      = @Commons.class_collaps(@list_columns_collaps, "runstats_up");
+    string runstats_down_clps    = @Commons.class_collaps(@list_columns_collaps, "runstats_down");
+    string Status_reason_clps    = @Commons.class_collaps(@list_columns_collaps, "Status_reason");
+    string Status_state_clps     = @Commons.class_collaps(@list_columns_collaps, "Status_state");
+
 }
 
 <table id="tb_list" class="tb_ip" border="0" cellpadding="0" cellspacing="0" tp="IPs">
-    <tr class="tr_hdr_ip">
-        <!-- <td class="td_hdr" rowspan="2">IP</td> -->
-        @{ string style_clps_td = list_columns_collaps.Contains("IP") ? "hd": ""; }
-
-        <td class="td_hdr @style_clps_td" rowspan="2" clps="0">
-            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'IP')">IP</div>
-            <div id="dv_flt_IP">
-                @if (dct_filters_columns.ContainsKey("IP"))
-                {
-                    @GeneratorHTML.Generate_filter_column( dct_filters_columns["IP"], ref dct_fields_properties );
-                }
-            </div>
+    <tr id="tr_hdr_flt" class="tr_hdr_ip">
+        <td class="td_hdr @IP_clps" rowspan="2" clps="1">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'ip')">IP</div>
+            <div id="dv_flt_ip">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "ip")</div>
             <div class="dv_clps">
-                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(0,'IP')"></i>
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(1,'IP')"></i>
             </div>
         </td>
-        <td class="td_hdr" rowspan="2" clps="1">Host</td>
-        <td class="td_hdr" rowspan="2" clps="2">Host type</td>
-        <td class="td_hdr" rowspan="2" clps="3">MAC</td>
-        <td class="td_hdr" rowspan="2" clps="4">Vendor</td>
-        <td class="td_hdr" rowspan="2" clps="5">Response status</td>
+        <td class="td_hdr @Host_clps" rowspan="2" clps="2">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'host')">Host</div>
+            <div id="dv_flt_host">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "host")</div>
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(2,'Host')"></i>
+            </div>
+        </td>
+        <td class="td_hdr @Host_type_clps" rowspan="2" clps="3">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'host_type')">Host type</div>
+            <div id="dv_flt_host_type">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "host_type")</div>
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(3,'Host_type')"></i>
+            </div>
+        </td>
+        <td class="td_hdr @MAC_clps" rowspan="2" clps="4">MAC
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(4,'MAC')"></i>
+            </div>
+        </td>
+        <td class="td_hdr @Vendor_clps" rowspan="2" clps="5">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'vendor')">Vendor</div>
+            <div id="dv_flt_vendor">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "vendor")</div>
+        <div class="dv_clps">
+            <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(5,'Vendor')"></i>
+            </div>
+        </td>
+        <td class="td_hdr @Response_status_clps" rowspan="2" clps="6">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'response_status')">Response status</div>
+            <div id="dv_flt_response_status">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "response_status")</div>
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(6,'Response_status')"></i>
+            </div>
+        </td>
         <!-- Ports start -->
-        <td class="td_hdr" colspan="6" clps="6">Ports</td>
+        <td class="td_hdr @Ports_clps" colspan="6" clps="7">Ports
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(7,'Ports')"></i>
+            </div>
+        </td>
 
         <!-- Ports end -->
-        <td class="td_hdr prt_hdr" rowspan="2" clps="7">Start scaning</td>
-        <td class="td_hdr prt_hdr" rowspan="2" clps="8">Finished elapsed</td>
-        <td class="td_hdr prt_hdr" rowspan="2" clps="9">runstats up</td>
-        <td class="td_hdr prt_hdr" rowspan="2" clps="10">runstats down</td>
-        <td class="td_hdr prt_hdr" rowspan="2" clps="11">Status reason</td>
-        <td class="td_hdr prt_hdr" rowspan="2" clps="12">Status state</td>
+        
+        <td class="td_hdr prt_hdr @Start_scaning_clps" rowspan="2" clps="8">
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'start_scaning')">Start scaning</div>
+            <div id="dv_flt_start_scaning">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "start_scaning")</div>
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(8,'start_scaning')"></i>
+            </div>
+        </td>
+        <td class="td_hdr prt_hdr @Finished_elapsed_clps" rowspan="2" clps="9">
+            Finished elapsed
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(9,'Finished_elapsed')"></i>
+            </div>
+        </td>
+        <td class="td_hdr prt_hdr @runstats_up_clps" rowspan="2" clps="10">
+            runstats up
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(10,'runstats_up')"></i>
+            </div>
+        </td>
+        <td class="td_hdr prt_hdr @runstats_down_clps" rowspan="2" clps="11">
+            runstats down
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(11,'runstats_down')"></i>
+            </div>
+        </td>
+        <td class="td_hdr prt_hdr @Status_reason_clps" rowspan="2" clps="12">
+            
+            <div onmouseover="_scaner.ihdrfltr(this)" onmouseout="_scaner.ohdrfltr(this)" onclick="_scaner.clk_hdrfltr(this,'status_reason')">Status reason</div>
+            <div id="dv_flt_status_reason">@GeneratorHTML.Generate_filter_column(ref dct_filters_columns, ref dct_fields_properties, "status_reason")</div>
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(12,'Status_reason')"></i>
+            </div>
+        </td>
+        <td class="td_hdr prt_hdr @Status_state_clps" rowspan="2" clps="13">
+            Status state
+            <div class="dv_clps">
+                <i class="fa fa-eye-slash fa_clps" aria-hidden="true" onmouseover="_scaner.iclps(this)" onmouseout="_scaner.oclps(this)" onclick="_scaner.clk_clps(13,'Status_state')"></i>
+            </div>
+        </td>
+        <td class="td_hdr prt_hdr" rowspan="2">
+            <input type="button" value="Применить фильтр" class="bt_sz_m" onmouseover="_scaner.ibtmrw(this)" onmouseout="_scaner.obtmrw(this)" onclick="_scaner.fltr_by_clm()" />
+        </td>
     </tr>
     <tr class="tr_hdr_ip">
 
         <!-- Ports start -->
-        <td class="td_hdr" clps="6">Number</td>
-        <td class="td_hdr" clps="6">Method</td>
-        <td class="td_hdr" clps="6">Protocol</td>
-        <td class="td_hdr" clps="6">Reason</td>
-        <td class="td_hdr" clps="6">Service</td>
-        <td class="td_hdr" clps="6">State</td>
+        <td class="td_hdr @Ports_clps" clps="7">Number</td>
+        <td class="td_hdr @Ports_clps" clps="7">Method</td>
+        <td class="td_hdr @Ports_clps" clps="7">Protocol</td>
+        <td class="td_hdr @Ports_clps" clps="7">Reason</td>
+        <td class="td_hdr @Ports_clps" clps="7">Service</td>
+        <td class="td_hdr @Ports_clps" clps="7">State</td>
         <!-- Ports end -->
 
     </tr>
@@ -65,25 +142,25 @@
         count++;
 
         <tr class="tr_ip @class_odd">
-            <td class="ip_prm" clps="0">
+            <td class="ip_prm @IP_clps" clps="1">
                 @scanResult.IP
             </td>
-            <td class="ip_prm" clps="1">
+            <td class="ip_prm @Host_clps" clps="2">
                 @scanResult.Host
             </td>
-            <td class="ip_prm" clps="2">
+            <td class="ip_prm @Host_type_clps" clps="3">
                 @scanResult.Host_type
             </td>
-            <td class="ip_prm" clps="3">
+            <td class="ip_prm @MAC_clps" clps="4">
                 @scanResult.MAC
             </td>
-            <td class="ip_prm" clps="4">
+            <td class="ip_prm @Vendor_clps" clps="5">
                 @scanResult.Vendor
             </td>
-            <td class="ip_prm" clps="5">
+            <td class="ip_prm @Response_status_clps" clps="6">
                 @scanResult.Response_status
             </td>
-            <td colspan="6" clps="6">
+            <td class="@Ports_clps" colspan="6" clps="7">
                 <!-- Ports start -->
                 @if (scanResult.Ports_list.Count > 1)
                 {
@@ -121,26 +198,28 @@
 
             <!-- Ports end -->
 
-            <td class="ip_prm" clps="7">
+            <td class="ip_prm @Start_scaning_clps" clps="8">
                 @scanResult.Start_scaning.ToString("yyyy.MM.dd hh:mm:ss")
             </td>
-            <td class="ip_prm" clps="8">
+            <td class="ip_prm @Finished_elapsed_clps" clps="9">
                 @scanResult.finished_elapsed.ToString( CultureInfo.InvariantCulture )
             </td>
-            <td class="ip_prm" clps="9">
+            <td class="ip_prm @runstats_up_clps" clps="10">
                 @scanResult.runstats_up
             </td>
-            <td class="ip_prm" clps="10">
+            <td class="ip_prm @runstats_down_clps" clps="11">
                 @scanResult.runstats_down
             </td>
-            <td class="ip_prm" clps="11">
+            <td class="ip_prm @Status_reason_clps" clps="12">
                 @scanResult.Status_reason
             </td>
-            <td class="ip_prm" clps="12">
+            <td class="ip_prm @Status_state_clps" clps="13">
                 @scanResult.Status_state
             </td>
-        </tr>
-
+            <td class="ip_prm">
+                <input type="button" value="Удалить" class="bt_pnl" onmouseover="_scaner.ibtn(this)" onmouseout="_scaner.obtn(this)" onclick="_scaner.ip_del(@scanResult.Id)" />
+            </td>
+        </tr>   
     }
 
     <tr id="tr_paginat">

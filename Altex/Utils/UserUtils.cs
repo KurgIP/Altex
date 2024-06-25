@@ -95,7 +95,7 @@ namespace Altex.Utils
         }
 
         // *********************************  
-        public static async Task<string> filters_columns_save(PlacesFiltersCollaps key_place, Dictionary<string, FilterByColumn> dct_filterByColumn)
+        public static async Task<string> filters_columns_save_async(PlacesFiltersCollaps key_place, Dictionary<string, FilterByColumn> dct_filterByColumn)
         // *********************************
         {
             string error      = "";
@@ -136,30 +136,37 @@ namespace Altex.Utils
         public static FilterByColumn Get_new_filter_by_column(string name_column_for_filter, ref Dictionary<string, Dictionary<string, string>> fields_properties)
         //****************************** 
         {
+            name_column_for_filter = name_column_for_filter.ToLower();
+
             FilterByColumn filter_by_column = new FilterByColumn();
-            filter_by_column.column = name_column_for_filter;
-            filter_by_column.type   = fields_properties[name_column_for_filter]["type"];
+            filter_by_column.column         = name_column_for_filter;
+            filter_by_column.type           = fields_properties[name_column_for_filter]["type"];
 
-            switch (filter_by_column.type)
+            try
             {
-                case "datetime":
-                    DateRange date_range = new DateRange();
-                    date_range.finish    = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 59, 59, 59);
-                    date_range.start     = date_range.finish.AddDays(-3);
+                switch (filter_by_column.type)
+                {
+                    case "datetime":
+                        DateRange date_range = new DateRange();
+                        date_range.finish = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 23, 59, 59);
+                        date_range.start = date_range.finish.AddDays(-3);
 
-                    FilterDateRange filter_date_range = new FilterDateRange();
-                    filter_date_range.period     = "last";
-                    filter_date_range.date_range = date_range;
-                    filter_by_column.order       = "order_desc";
-                    filter_by_column.value       = filter_date_range;
-                    break;
+                        FilterDateRange filter_date_range = new FilterDateRange();
+                        filter_date_range.period = "last";
+                        filter_date_range.date_range = date_range;
+                        filter_by_column.order = "order_desc";
+                        filter_by_column.value = filter_date_range;
+                        break;
 
-                default:
-                    filter_by_column.order = "no_order"; //"order",  "order_desc"
-                    filter_by_column.value = "";
-                    break;
+                    default:
+                        filter_by_column.order = "no_order"; //"order",  "order_desc"
+                        filter_by_column.value = "";
+                        break;
+                }
             }
-
+            catch (Exception ex) {
+                string ss = ex.Message;
+                    }
             return filter_by_column;
         }
 
@@ -200,13 +207,7 @@ namespace Altex.Utils
 
                     FilterByColumn filterByColumn = UserUtils.Get_new_filter_by_column(column_name, ref fields_properties);
 
-                    #region //--------------- value
-                    Match m_regx_value = regx_value.Match(filter_text);
-                    if (m_regx_value.Success)
-                    {
-                        filterByColumn.value = m_regx_value.Groups[1].Value;
-                    }
-                    #endregion
+
 
                     #region //--------------- order
                     Match m_regx_order = regx_order.Match(filter_text);
@@ -224,6 +225,29 @@ namespace Altex.Utils
                         filterByColumn.type = m_regx_type.Groups[1].Value;
                     }
                     #endregion
+                    #region //--------------- value
+                    Match m_regx_value = regx_value.Match(filter_text);
+                    if (m_regx_value.Success)
+                    {
+                        string value_txt = m_regx_value.Groups[1].Value;
+
+                        switch(filterByColumn.type)
+                        {
+                            case "datetime":
+                                filterByColumn.value = Commons.Parsing_string_to_FilterDateRange( value_txt );
+                                
+                                break;
+
+                            default:
+                                filterByColumn.value = value_txt;
+                                break;
+
+                        }
+
+
+                    }
+                    #endregion
+
 
                     dct_filter_by_columns.Add(filterByColumn.column, filterByColumn);
                 }

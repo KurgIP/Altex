@@ -126,7 +126,8 @@
     }
 
 
-
+    function ibtn(n) { jQuery(n).addClass("bt_sl"); }
+    function obtn(n) { jQuery(n).removeClass("bt_sl"); }
     function clps_pnl_show()
     //**********************
     {
@@ -137,24 +138,16 @@
         data["tp"] = list_type;
 
         switch (list_type) {
-            case "workplace":
-                data["orgnz"] = jQuery("#sl_organization").val();
-                data["strct"] = jQuery("#sl_structure").val();
-                _common.ajax_query_html("/WorkplaceManage/aj_set_workplaces_collaps_columns_panel_show", data, "body", "append");
-                break;
-
-            case "proger":
-                _common.ajax_query_html("/ProgersManage/aj_set_progers_collaps_columns_panel_show", data, "body", "append");
-                break;
-
-            case "issue":
-                _common.ajax_query_html("/IssuesManage/aj_set_issues_collaps_columns_panel_show", data, "body", "append");
+            case "IPs":
+                _common.ajax_query_html("/Scaner/aj_set_collaps_columns_panel_show", data, "body", "append");
                 break;
 
             default:
                 break;
         }
     }
+
+
 
     function iclpspnl(n) { jQuery(n).addClass("td_pnlclps_sl"); }
     function oclpspnl(n) { jQuery(n).removeClass("td_pnlclps_sl"); }
@@ -177,33 +170,23 @@
     }
     function pnlclps_sv() {
         // Массив всех закрытых колонок. td_pnlclps_name
-        let arr_clm_hd = jQuery("#tb_pnlclps").find(".td_pnlclps_hd");
+        let arr_clm_hd       = jQuery("#tb_pnlclps").find(".td_pnlclps_hd");
         let list_clm_name_hd = "";
         for (let i = 0; i < arr_clm_hd.length; i++) {
-            let clm_id = jQuery(arr_clm_hd[i]).attr("id");
-            let clm_name = clm_id.substring(11);
+            let clm_id      = jQuery(arr_clm_hd[i]).attr("id");
+            let clm_name     = clm_id.substring(11);
             list_clm_name_hd = list_clm_name_hd + clm_name + ",";
         }
         // Тип данных в таблице
         let list_type = jQuery("#tb_list").attr("tp");
 
         let data = {};
-        data["tp"] = list_type;
+        data["tp"]    = list_type;
         data["clmhd"] = list_clm_name_hd;
 
         switch (list_type) {
-            case "workplace":
-                data["orgnz"] = jQuery("#sl_organization").val();
-                data["strct"] = jQuery("#sl_structure").val();
-                _common.ajax_query_js_callback("/WorkplaceManage/aj_set_workplaces_collaps_columns_panel_close", data, pnl_clps_close);
-                break;
-
-            case "proger":
-                _common.ajax_query_js_callback("/ProgersManage/aj_set_progers_collaps_columns_panel_close", data, pnl_clps_close);
-                break;
-
-            case "issue":
-                _common.ajax_query_js_callback("/IssuesManage/aj_set_issues_collaps_columns_panel_close", data, pnl_clps_close);
+            case "IPs":
+                _common.ajax_query_js_callback("/Scaner/aj_set_collaps_columns_panel_close", data, pnl_clps_close);
                 break;
 
             default:
@@ -213,8 +196,6 @@
 
     }
 
-    function ibtn(n) { jQuery(n).addClass("bt_sl"); }
-    function obtn(n) { jQuery(n).removeClass("bt_sl"); }
     function ibtmrw(n) { jQuery(n).addClass("bt_sz_m_sl"); }
     function obtmrw(n) { jQuery(n).removeClass("bt_sz_m_sl"); }
 
@@ -236,7 +217,7 @@
         let list_type = jQuery("#tb_list").attr("tp"); // 
         switch (list_type) {
             case "IPs":
-                //_common.ajax_query_html("/Scaner/aj_set_filter_by_column", data, "#dv_flt_" + n, "empty_append");
+                _common.ajax_query_html("/Scaner/aj_set_filter_by_column", data, "#dv_flt_" + n, "empty_append");
                 break;
 
             default:
@@ -249,7 +230,7 @@
         let list_type = jQuery("#tb_list").attr("tp"); // 
         switch (list_type) {
             case "IPs":
-                //_common.ajax_query_html("/Scaner/aj_get_list_by_filters_column", data, "#dv_data", "empty_append");
+                _common.ajax_query_html("/Scaner/aj_get_list_by_filters_column", data, "#dv_ip_scan_result", "empty_append");
                 break;
 
             default:
@@ -257,6 +238,8 @@
         }
     }
 
+    
+    function ip_del(n) { }
 
     //====================================================================  RETURN  ==================
     return {
@@ -268,13 +251,29 @@
         pgn:        pgn,
         pgn_nmb_pg: pgn_nmb_pg,
         
-        iclps:    iclps,
-        oclps:    oclps,
-        clk_clps: clk_clps,
+        iclps:         iclps,
+        oclps:         oclps,
+        clk_clps:      clk_clps,
+        ibtn:          ibtn,
+        obtn:          obtn,
+        clps_pnl_show: clps_pnl_show,
 
+        iclpspnl:      iclpspnl,
+        oclpspnl:      oclpspnl,
+        clk_clpspnl:   clk_clpspnl,
+        pnlclps_sv:    pnlclps_sv,
+        pnlcls:        pnlcls,
+        ipnlcls:       ipnlcls,
+        opnlcls:       opnlcls,
+
+        ibtmrw:      ibtmrw,
+        obtmrw:      obtmrw,
         ihdrfltr:    ihdrfltr,
         ohdrfltr:    ohdrfltr,
-        clk_hdrfltr: clk_hdrfltr
+        clk_hdrfltr: clk_hdrfltr,
+        fltr_by_clm: fltr_by_clm,
+
+        ip_del: ip_del
     }
 }());
 

@@ -35,17 +35,19 @@ namespace Altex
         public static  IHttpContextAccessor  _httpContextAccessor  { get; private set; }
         public         IConfiguration        Configuration         { get; }
         public static UserManager<IdentityUser> _StaticUserManager { get; private set; }
+        public static IHostingEnvironment       _HostingEnvironment { get; private set; }
 
         //public static IConfiguration StaticConfig { get; private set; }        
         //public static ApplicationUser     _app_user            { get; private set; }
         //public static ILoggerManager _logger { get; private set; }
         // public Startup(IHostingEnvironment env, IConfiguration configuration, HttpContext context, ILogger<Controller> logger ) //, IHttpContextAccessor contextAccessor, ILogger<Controller> logger
-        
+
         public Startup(IHostingEnvironment env, IConfiguration configuration) //
         {
             Configuration        = configuration;
             _serverRootPath      = env.ContentRootPath;
             _configurationStatic = configuration;
+            _HostingEnvironment = env;
             //_httpContextAccessor = contextAccessor;
             //_httpContextStatic   = context;
             //_logerStatic         = logger;
@@ -54,7 +56,7 @@ namespace Altex
 
 
         // This method gets called by the runtime. Use this method to add services to the container. IWebHostBuilder
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services )
         {
             string postgreSq_lConnection = Configuration.GetConnectionString("PostgreSqlConnection");
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -66,7 +68,13 @@ namespace Altex
                         .AddRoles<IdentityRole>()
                         .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
+
+            if (_HostingEnvironment.IsDevelopment())
+            {
+                services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            }
             services.AddRazorPages();
+
 
             services.Configure<IdentityOptions>(options =>
             {

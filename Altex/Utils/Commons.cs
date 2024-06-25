@@ -15,6 +15,7 @@ using System.Web;
 using Altex.Controllers;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Altex.Utils;
+using Microsoft.AspNetCore.Html;
 
 namespace Altex.Util
 {
@@ -187,6 +188,40 @@ namespace Altex.Util
 
             return date_range;
         }
+        public static FilterDateRange Parsing_string_to_FilterDateRange(string txt)
+        {
+            DateTime range_start  = DateTime.MinValue;
+            DateTime range_finish = DateTime.MaxValue;
+
+            DateRange date_range = new DateRange();
+            date_range.start     = range_start;
+            date_range.finish    = range_finish;
+
+            FilterDateRange filter_date_range = new FilterDateRange();
+            filter_date_range.date_range = date_range;
+            filter_date_range.period = "all";
+
+
+            if (String.IsNullOrEmpty(txt)) return filter_date_range;
+
+            string[] arr_date_range = txt.Split(new Char[] { ';' });
+
+            if (arr_date_range.Length != 3) return filter_date_range;
+
+            DateTime.TryParse(arr_date_range[0], out range_start);
+            DateTime.TryParse(arr_date_range[1], out range_finish);
+
+            date_range.start  = range_start;
+            date_range.finish = range_finish;
+
+            filter_date_range = new FilterDateRange();
+            filter_date_range.date_range = date_range;
+            filter_date_range.period = arr_date_range[2];
+
+            return filter_date_range;
+        }
+
+
         #endregion
 
 
@@ -651,7 +686,7 @@ namespace Altex.Util
 
                         // ---------------------------- PARAM  VALUE
                         if (!String.IsNullOrEmpty(sql_where)) sql_where = sql_where + " AND ";
-                        sql_where = sql_where + "(tb.\"" + filter_by_column.column + "\">='" + date_range.start + "' AND tb.\"" + filter_by_column.column + "\"<='" + date_range.finish + "')";
+                        sql_where = sql_where + "(tb.\"" + filter_by_column.column + "\">='" + date_range.start.ToString("yyyy.MM.dd hh:mm:ss") + "' AND tb.\"" + filter_by_column.column + "\"<='" + date_range.finish.ToString("yyyy.MM.dd hh:mm:ss") + "')";
                         break;
                     #endregion
 
@@ -680,12 +715,12 @@ namespace Altex.Util
             }
 
             if (!String.IsNullOrEmpty(sql_where))
-                sql_where = " WHERE " + sql_where;
+                sql_where = " WHERE " + sql_where + " ";
 
             if (!String.IsNullOrEmpty(sql_order))
             {
                 sql_order = sql_order.Remove(sql_order.Length - 2, 2);
-                sql_order = " ORDER BY " + sql_order;
+                sql_order = " ORDER BY " + sql_order + " ";
             }
             //else
             //{
@@ -708,7 +743,7 @@ namespace Altex.Util
             FilterDateRange filter_date_range = (FilterDateRange)filter_by_column.value;
 
             DateTime curr_datatime = DateTime.Now;
-            DateTime curr_day      = new DateTime(curr_datatime.Year, curr_datatime.Month, curr_datatime.Day, 59, 59, 59);
+            DateTime curr_day      = new DateTime(curr_datatime.Year, curr_datatime.Month, curr_datatime.Day, 23, 59, 59);
 
             switch (filter_date_range.period)
             {
@@ -769,5 +804,9 @@ namespace Altex.Util
         }
 
 
+        public static string class_collaps(List<string> list_columns_collaps, string name_field)
+        {
+            return list_columns_collaps.Contains( name_field.ToLower() ) ? "hd" : "";
+        }
     }
 }

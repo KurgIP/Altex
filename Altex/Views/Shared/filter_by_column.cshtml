@@ -1,0 +1,20 @@
+﻿@using Altex.Util;
+@using Altex.Utils;
+@{
+FilterByColumn filter_by_column = (FilterByColumn)ViewData["filter_by_column"];
+
+switch( filter_by_column.type )
+{
+    case "datetime":
+        @GeneratorHTML.filter_by_column_datetime( ref filter_by_column )
+        break;
+           
+    case "bool":
+        @GeneratorHTML.filter_by_column_bool( ref filter_by_column )
+        break;
+                
+    default:
+        @GeneratorHTML.filter_by_column( ref filter_by_column )
+        break;    
+} 
+}

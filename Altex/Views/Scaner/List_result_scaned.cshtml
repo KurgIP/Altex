@@ -9,8 +9,12 @@
 <div class="text-center">
     <h1 class="display-4">Список просканированных IP</h1>
 
+    <div><input type="button" value="Раскрыть колонки" class="bt_pnl" onmouseover="_scaner.ibtn(this)" onmouseout="_scaner.obtn(this)" onclick="_scaner.clps_pnl_show()" /></div>
+
     <div id="dv_ip_scan_result" class="cntnr_block_scan_result">
+
         <partial name="table_ip" />        
     </div>   
 
 </div>
+

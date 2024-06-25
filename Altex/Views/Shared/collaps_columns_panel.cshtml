@@ -1,0 +1,34 @@
+﻿@{
+    Dictionary<string, Dictionary<string, string>> dct_fields_properties = (Dictionary<string, Dictionary<string, string>>)ViewData["dct_fields_properties"];
+    List<string>                                   list_columns_collaps  = (List<string>)ViewData["list_columns_collaps"];
+    int numb_column = 1;
+}
+<div id="dv_pnlclps" pnl="clps">
+<div class="dv_clps_hdr">КОЛОНКИ ДЛЯ СКРЫТИЯ</div>
+<table id="tb_pnlclps">
+@{
+    // Ключи это имена колонок которые будут выводиться
+    foreach ( string name in dct_fields_properties.Keys )
+    {
+        if ( dct_fields_properties[name]["html"] == "skip" ) continue;
+        // if (dct_fields_properties[name]["role_type_show"] == "2") continue;
+
+        // Устанавливаем класс для визуального выделения  имён колонок которые скрыты
+        string cls_td = "td_pnlclps_shw";
+        if ( list_columns_collaps.Contains(name.ToLower()) ) cls_td = "td_pnlclps_hd";
+
+        <tr>
+            <td id="td_pnlclps_@name" class="@cls_td" onmouseover="_scaner.iclpspnl(this)" onmouseout="_scaner.oclpspnl(this)" onclick="_scaner.clk_clpspnl(@numb_column,'@name')">
+                @name
+            </td>
+        </tr>
+
+        numb_column++;
+    }
+}
+</table>
+
+    <input type="button" class="bt_pnl" value="Закрыть" onmouseover="_scaner.ibtn(this)" onmouseout="_scaner.obtn(this)" onclick="_scaner.pnlcls(this)" />
+    <input type="button" class="bt_pnl" value="Сохранить" onmouseover="_scaner.ibtn(this)" onmouseout="_scaner.obtn(this)" onclick="_scaner.pnlclps_sv(this)" />
+    <i class="fa fa-close dv_pnlcls_exit" aria-hidden="true" onmouseover="_scaner.ipnlcls(this)" onmouseout="_scaner.opnlcls(this)" onclick="_scaner.pnlcls(this)"></i>
+</div>

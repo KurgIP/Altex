@@ -142,20 +142,20 @@ namespace Altex.Utils
 
                         scanResult.Id               = (int)dr["id"];
                         scanResult.IP               = (string)dr["ip"];
-                        scanResult.MAC              = (dr["mac"].GetType().Name == "DBNull") ? "" : (string)dr["mac"];
-                        scanResult.Host             = (dr["host"].GetType().Name == "DBNull") ? "" : (string)dr["host"];
-                        scanResult.Host_type        = (dr["host_type"].GetType().Name == "DBNull") ? "" : (string)dr["host_type"];
-                        scanResult.Vendor           = (dr["vendor"].GetType().Name == "DBNull") ? "" : (string)dr["vendor"];
+                        scanResult.MAC              = (dr["mac"             ].GetType().Name == "DBNull") ? "" : (string)dr["mac"];
+                        scanResult.Host             = (dr["host"            ].GetType().Name == "DBNull") ? "" : (string)dr["host"];
+                        scanResult.Host_type        = (dr["host_type"       ].GetType().Name == "DBNull") ? "" : (string)dr["host_type"];
+                        scanResult.Vendor           = (dr["vendor"          ].GetType().Name == "DBNull") ? "" : (string)dr["vendor"];
                         scanResult.finished_elapsed = (dr["finished_elapsed"].GetType().Name == "DBNull") ? -1 : (float)dr["finished_elapsed"];
-                        scanResult.finished_exit    = (dr["finished_exit"].GetType().Name == "DBNull") ? "" : (string)dr["finished_exit"];
+                        scanResult.finished_exit    = (dr["finished_exit"   ].GetType().Name == "DBNull") ? "" : (string)dr["finished_exit"];
                         scanResult.finished_time    = (DateTime)dr["finished_time"];
-                        string Response_status_txt  = (dr["response_status"].GetType().Name == "DBNull") ? "" : (string)dr["response_status"];
+                        string Response_status_txt  = (dr["response_status" ].GetType().Name == "DBNull") ? "" : (string)dr["response_status"];
                         scanResult.Response_status  = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), Response_status_txt, true);
-                        scanResult.runstats_down    = (dr["runstats_down"].GetType().Name == "DBNull") ? "" : (string)dr["runstats_down"];
-                        scanResult.runstats_up      = (dr["runstats_up"].GetType().Name == "DBNull") ? "" : (string)dr["runstats_up"];
+                        scanResult.runstats_down    = (dr["runstats_down"   ].GetType().Name   == "DBNull") ? "" : (string)dr["runstats_down"];
+                        scanResult.runstats_up      = (dr["runstats_up"     ].GetType().Name == "DBNull") ? "" : (string)dr["runstats_up"];
                         scanResult.Start_scaning    = (DateTime)dr["start_scaning"];
-                        scanResult.Status_reason    = (dr["status_reason"].GetType().Name == "DBNull") ? "" : (string)dr["status_reason"];
-                        scanResult.Status_state     = (dr["status_state"].GetType().Name == "DBNull") ? "" : (string)dr["status_state"];
+                        scanResult.Status_reason    = (dr["status_reason"   ].GetType().Name == "DBNull") ? "" : (string)dr["status_reason"];
+                        scanResult.Status_state     = (dr["status_state"    ].GetType().Name == "DBNull") ? "" : (string)dr["status_state"];
 
                         dct_ScanResults.Add(scanResult.Id, scanResult);
                         list_id_ScanResults.Add(scanResult.Id);

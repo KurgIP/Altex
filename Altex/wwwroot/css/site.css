@@ -49,7 +49,19 @@ body { margin-bottom: 60px;}
  /* *******************************************************************  Collaps column  ******************************************************************* */
 .dv_clps{ position:absolute; top:-3px; right:0px;}
 .fa_clps{ color: #6493d0; font-size:10px; line-height:0px;}
-.clps_sl, .clmfltr_sl{ background-color:#ffe50c; color: #1067a6; font-size:14px; line-height:0px; cursor:pointer; }
+.clps_sl, .clmfltr_sl, bt_sl, td_pnlclps_sl{ background-color:#ffe50c; color: #1067a6; font-size:14px; line-height:0px; cursor:pointer; }
+
+#dv_pnlclps { background-color:#e6f5ff; border:1px solid #228ac9; position:fixed; top:5px; left:5px; border-radius:8px; padding:12px;}
+.dv_clps_hdr{ color:#08596b; padding:2px 3px; font-size:12px;}
+#tb_pnlclps { border-collapse:collapse; margin:auto; width: 100%; margin: 10px 0px;}
+.td_pnlclps_shw { background-color:#f2fdff;  border:1px solid #b2d1e0; padding:1px 5px; }
+.td_pnlclps_hd { background-color:#c2daf0;  border:1px solid #b2d1e0; padding:1px 5px; }
+.td_pnlclps_sl { background-color:#efd394;  border:1px solid #d4bd3c; padding:1px 5px; }
+.bt_pnl{ background-color:#c2daf0; color:#10578a;  border:1px solid #85a0b9; border-radius:6px; font-size:10px; padding: 3px 6px;}
+
+.dv_pnlcls_exit {position:absolute; top:2px; right:3px; color:#73b0f1; font-size:12px;}
+.dv_pnlcls_exit_sl {color:#fba502; font-size:18px; top:0px; right:0px; }
+
 
 
 @font-face {
